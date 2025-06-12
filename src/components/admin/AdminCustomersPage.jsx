@@ -1,7 +1,6 @@
 
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import WholesaleUserManagement from "./WholesaleUserManagement";
 import UserManagement from "./UserManagement";
 
 const AdminCustomersPage = () => {
