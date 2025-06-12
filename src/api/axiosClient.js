@@ -2,7 +2,7 @@ import axios from 'axios'
 
 export default function api() {
     const api = axios.create({
-        baseURL: 'https://wholesale-app-backend-laravel-production.up.railway.app',
+        baseURL: import.meta.env.VITE_API_BASE_URL,
         withCredentials: true
     })
    axios.defaults.withCredentials = true;
