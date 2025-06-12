@@ -17,6 +17,7 @@ import AdminCustomersPage from "../components/admin/AdminCustomersPage";
 import AdminServices from "../components/admin/AdminServices";
 import { useAuth } from "../context/AuthContext";
 import AdminCategory from "../components/admin/AdminCategory";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -55,6 +56,7 @@ const AdminPanel = () => {
             };
 
   return (
+    <ProtectedRoute>
     <MainLayout>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -140,6 +142,7 @@ const AdminPanel = () => {
         </div>
       </motion.div>
     </MainLayout>
+    </ProtectedRoute>
   );
 };
 
