@@ -44,12 +44,14 @@ function App() {
                      
                         
                         <Route path="/reset-password" element={<ResetPassword />} />
-
+                        <ProtectedRoute>              
                          <Route path="/admin/*" element={
                         
                             <AdminPanel />
                           
                         } />
+                        </ProtectedRoute>
+
                      
                     
                         

@@ -68,6 +68,13 @@ function NavigationLinks() {
             <LogOut className="h-4 w-4" />
             <span>Logout</span>
           </Button>
+          
+      <Link to="/checkout">
+        <Button variant="default" size="sm" className="flex gap-2 items-center">
+          <ShoppingBag className="h-4 w-4" />
+          <span>Cart</span>
+        </Button>
+      </Link>
         </>
       ) : (
         <>
@@ -84,12 +91,6 @@ function NavigationLinks() {
         </>
       )}
       
-      <Link to="/checkout">
-        <Button variant="default" size="sm" className="flex gap-2 items-center">
-          <ShoppingBag className="h-4 w-4" />
-          <span>Cart</span>
-        </Button>
-      </Link>
     </nav>
   )
 }

@@ -145,7 +145,7 @@ const MainLayout = ({ children, showFooter = true }) => {
             
             {/* Subtle Admin Button */}
         { user?.role === 'admin' ? ( <div className="flex justify-center mt-8">
-              <Link to="/admin-auth">
+              <Link to="/admin">
                 <Button 
                   variant="ghost" 
                   size="sm" 
