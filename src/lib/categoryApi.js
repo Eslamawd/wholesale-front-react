@@ -1,0 +1,37 @@
+// src/lib/serviceApi.js
+
+import api from "../api/axiosClient";
+
+
+export async function loadCategory() {
+  const response = await api().get("api/admin/categories");
+  // نفترض أنّ الـ response.data هو مصفوفة الخدمات
+  return response.data;
+}
+
+export async function addCategory(serviceData) {
+  // لا حاجة لتمرير الـ id، Laravel سيولّد id تلقائيًا (بما أننا استخدمنا auto-increment)
+  const payload = { ...serviceData };
+
+  const response = await api().post("api/admin/categories", payload);
+  return response.data;
+}
+
+
+export async function updateCategory(id, formData ) {
+  
+  
+  const response = await api().put(`api/admin/categories/${id}`, formData);
+  return response.data;
+}
+
+/**
+ * حذف خدمة
+ * DELETE /api/services/{id}
+ */
+export async function deleteCategory(id) {
+  const response = await api().delete(`api/admin/categories/${id}`);
+  return response.data;
+}
+
+
