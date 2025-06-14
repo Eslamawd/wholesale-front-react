@@ -241,8 +241,9 @@ function Account() {
                 <Button variant="outline" className="mr-2">Cancel</Button>
                 <Button>Save Changes</Button>
               </div>
+            
+            </TabsContent>
               
-              <div className="flex justify-center mt-4">
                 <Button 
                   variant="destructive" 
                   onClick={handleLogout}
@@ -251,8 +252,7 @@ function Account() {
                   <LogOut className="mr-2 h-4 w-4" />
                   Sign Out
                 </Button>
-              </div>
-            </TabsContent>
+            
           </Tabs>
         </motion.div>
       </MainLayout>
