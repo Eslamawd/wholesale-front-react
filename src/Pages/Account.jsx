@@ -20,11 +20,11 @@ import {
   Key,
   Copy
 } from "lucide-react";
-import { useAuth, logout } from "../context/AuthContext";
+import { useAuth } from "../context/AuthContext";
 import { getBalanceUser } from "../lib/walletApi";
 
 function Account() {
-    const { user } = useAuth()
+    const { user, logout } = useAuth()
     const [ balance, setBalance ] = useState(0)
     const navigate = useNavigate()
 
