@@ -7,6 +7,8 @@ import { Input } from "../components/ui/Input";
 import { Label } from "../components/ui/Label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Copy, Check, AlertCircle, CreditCard, ExternalLink, Clock, User, LogIn } from "lucide-react";
+import MainLayout from "../components/MainLayout";
+
 
 
 
