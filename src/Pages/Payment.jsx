@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
-import { Label } from "../components/ui/label";
+import { Label } from "../components/ui/Label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Copy, Check, AlertCircle, CreditCard, ExternalLink, Clock, User, LogIn } from "lucide-react";
 
