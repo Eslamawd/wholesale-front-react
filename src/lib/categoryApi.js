@@ -4,7 +4,7 @@ import api from "../api/axiosClient";
 
 
 export async function loadCategory() {
-  const response = await api().get("api/admin/categories");
+  const response = await api().get("api/categories");
   // نفترض أنّ الـ response.data هو مصفوفة الخدمات
   return response.data;
 }

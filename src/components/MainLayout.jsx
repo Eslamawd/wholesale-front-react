@@ -35,7 +35,7 @@ const MainLayout = ({ children, showFooter = true }) => {
       
       {/* Mobile Navigation */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background shadow-top z-40 border-t border-border">
-        <div className="flex justify-around py-2">
+        <div className="flex justify-around py-2 bg-cyan-200">
           <Link 
             to="/" 
             className={cn(
