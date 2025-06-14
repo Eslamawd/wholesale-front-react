@@ -19,6 +19,7 @@ import About from './Pages/About'
 import Contact from './Pages/Contact'
 import Checkout from './Pages/Checkout'
 import Account from './Pages/Account'
+import Payment from './Pages/Payment'
 
 function App() {
 
@@ -42,6 +43,7 @@ function App() {
                         <Route path="/contact" element={<Contact />} />
                         <Route path="/checkout" element={<Checkout />} />
                         <Route path="/account" element={<Account />} />
+                        <Route path='payment' element={<Payment/>} />
 
                         
                      
