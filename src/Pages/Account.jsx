@@ -58,6 +58,7 @@ function Account() {
 
    return (
       <MainLayout>
+        
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -111,7 +112,7 @@ function Account() {
                     </div>
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">Account Balance</label>
-                      <p>${balance.toFixed(2)}</p>
+                      <p>${balance}</p>
                     </div>
                   </div>
             
