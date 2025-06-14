@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
-import MainLayout from "@/components/MainLayout";
+import MainLayout from "../components/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card";
-import { Button } from "@/components/ui/button";
+import { Button } from "../components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { toast } from "sonner";
 import { 
