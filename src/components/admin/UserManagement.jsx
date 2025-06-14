@@ -207,7 +207,7 @@ const UserManagement = () => {
                   <TableRow>
                     <TableHead>User</TableHead>
                     <TableHead>Email</TableHead>
-                    <TableHead>Registration Date</TableHead>
+                    <TableHead>phone</TableHead>
                     <TableHead>Balance</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -225,7 +225,7 @@ const UserManagement = () => {
                         {user.email}
                       </TableCell>
                       <TableCell>
-                        {new Date(user.created_at).toLocaleDateString()}
+                        {user?.phone}
                       </TableCell>
                       <TableCell className="flex items-center gap-1">
                         <Wallet className="h-4 w-4 text-muted-foreground" />
