@@ -18,6 +18,7 @@ import ServiceDetail from './Pages/ServiceDetail'
 import About from './Pages/About'
 import Contact from './Pages/Contact'
 import Checkout from './Pages/Checkout'
+import Account from './Pages/Account'
 
 function App() {
 
