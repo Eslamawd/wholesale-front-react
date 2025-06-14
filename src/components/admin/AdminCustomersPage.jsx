@@ -22,7 +22,6 @@ const AdminCustomersPage = () => {
         </TabsContent>
         
         <TabsContent value="wholesale" className="mt-6">
-          <WholesaleUserManagement />
         </TabsContent>
       </Tabs>
     </div>
