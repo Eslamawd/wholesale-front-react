@@ -15,7 +15,7 @@ import { getBalanceUser } from "../lib/walletApi";
 
 
 function Payment() {
-  const [userBalance, setUserBalance] = useState(120.75);
+  const [userBalance, setUserBalance] = useState(0);
   const [wishMoneyAccount] = useState('WISH-9988776655');
   const [copied, setCopied] = useState(false);
   const [amount, setAmount] = useState('');
@@ -101,9 +101,7 @@ function Payment() {
       setIsProcessing(false);
     }, 2000);
   };
-  if (!userBalance) {
-    return <div className="container mx-auto py-8">Loading...</div>;
-  }
+ 
 
   return (
     <MainLayout>
@@ -121,7 +119,7 @@ function Payment() {
                   <div className="flex flex-col md:flex-row justify-between items-center">
                     <div>
                       <h2 className="text-lg font-medium">Your Current Balance</h2>
-                      <div className="text-3xl font-bold mt-2">${userBalance}</div>
+                      <div className="text-3xl font-bold mt-2">${userBalance || 0}</div>
                     </div>
                   </div>
                 </CardContent>
