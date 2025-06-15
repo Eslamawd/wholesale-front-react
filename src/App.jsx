@@ -43,11 +43,13 @@ function App() {
                         <Route path="/services/:id" element={<ServiceDetail />} />
                         <Route path="/about" element={<About />} />
                         <Route path="/contact" element={<Contact />} />
-                        <UserRoute>
+                        <Route element={
+                          <UserRoute />
+                        }>
                         <Route path="/checkout" element={<Checkout />} />
                         <Route path="/account" element={<Account />} />
                         <Route path="/payment" element={<Payment/>} />
-                        </UserRoute>
+                        </Route>
 
                         
                      
