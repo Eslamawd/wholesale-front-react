@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import  { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "../components/ui/Card";
@@ -8,6 +8,8 @@ import { Label } from "../components/ui/Label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Copy, Check, AlertCircle, CreditCard, ExternalLink, Clock, User, LogIn } from "lucide-react";
 import MainLayout from "../components/MainLayout";
+import { toast } from "sonner";
+import { getBalanceUser } from "../lib/walletApi";
 
 
 
@@ -27,6 +29,39 @@ function Payment() {
     routingNumber: '987654321',
     swift: 'ABCDEFXX'
   };
+
+
+
+   const fetchUserBalance = async () => {
+
+    try {
+      const response = await getBalanceUser()
+      const safeBalance = Math.max(0, response.balance || 0);
+
+      if (userBalance !== 0 && safeBalance !== userBalance) {
+        setUserBalance(userBalance);
+
+        if (safeBalance < 10) {
+          toast.warning('Your balance is low', {
+            description: 'Please add funds to continue making purchases.'
+          });
+        }
+
+      
+      }
+
+      setUserBalance(safeBalance);
+    } catch (error) {
+      console.error('Error fetching user balance:', error);
+      toast.error('Failed to fetch balance');
+    } 
+  };
+
+    useEffect(() => {
+
+    fetchUserBalance();
+
+    }, []);
 
   const handleCopyAccount = () => {
     navigator.clipboard.writeText(wishMoneyAccount).then(() => {
@@ -66,6 +101,9 @@ function Payment() {
       setIsProcessing(false);
     }, 2000);
   };
+  if (!userBalance) {
+    return <div className="container mx-auto py-8">Loading...</div>;
+  }
 
   return (
     <MainLayout>
@@ -83,7 +121,7 @@ function Payment() {
                   <div className="flex flex-col md:flex-row justify-between items-center">
                     <div>
                       <h2 className="text-lg font-medium">Your Current Balance</h2>
-                      <div className="text-3xl font-bold mt-2">${userBalance.toFixed(2)}</div>
+                      <div className="text-3xl font-bold mt-2">${userBalance}</div>
                     </div>
                   </div>
                 </CardContent>
