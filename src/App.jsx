@@ -20,6 +20,8 @@ import Contact from './Pages/Contact'
 import Checkout from './Pages/Checkout'
 import Account from './Pages/Account'
 import Payment from './Pages/Payment'
+import { User } from 'lucide-react'
+import UserRoute from './components/UserRoute'
 
 function App() {
 
@@ -41,9 +43,11 @@ function App() {
                         <Route path="/services/:id" element={<ServiceDetail />} />
                         <Route path="/about" element={<About />} />
                         <Route path="/contact" element={<Contact />} />
+                        <UserRoute>
                         <Route path="/checkout" element={<Checkout />} />
                         <Route path="/account" element={<Account />} />
                         <Route path="/payment" element={<Payment/>} />
+                        </UserRoute>
 
                         
                      
