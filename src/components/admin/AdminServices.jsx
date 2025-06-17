@@ -223,9 +223,7 @@ const ServiceList = ({ services, onEdit, onDelete }) => {
                 src={service.image_path}
                 alt={service.title}
                 className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.target.src = "/placeholder.svg";
-                }}
+              
               />
             )}
           </div>
