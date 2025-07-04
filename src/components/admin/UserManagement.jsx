@@ -287,7 +287,7 @@ const UserManagement = () => {
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent className='bg-blue-100'>
+        <AlertDialogContent className='bg-black text-white'>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -306,7 +306,7 @@ const UserManagement = () => {
 
       {/* Balance Management Dialog */}
       <Dialog open={showBalanceDialog} onOpenChange={setShowBalanceDialog}>
-        <DialogContent className='bg-blue-200'>
+        <DialogContent className='bg-black text-white max-w-md'>
           <DialogHeader>
             <DialogTitle>
               {balanceAction === "deposit" ? "deposit" : "withdraw"}

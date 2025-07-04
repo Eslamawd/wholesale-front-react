@@ -392,10 +392,9 @@ const ChatBot = () => {
 
   const ChatContent = () => (
     <div className="flex flex-col h-full">
-      <div className="p-3 border-b flex justify-between items-center bg-primary text-primary-foreground">
+      <div className="p-3 border-b flex justify-between items-center bg-black">
         <h3 className="font-medium">ServexLB Support</h3>
         <Button 
-          variant="ghost" 
           size="icon" 
           onClick={() => setIsOpen(false)} 
           className="h-6 w-6 text-primary-foreground hover:text-primary-foreground/80"
@@ -404,7 +403,7 @@ const ChatBot = () => {
         </Button>
       </div>
       
-      <div className="flex-1 overflow-y-auto p-3 bg-white space-y-3">
+      <div className="flex-1 overflow-y-auto p-3 bg-black space-y-3">
         {messages.map((message) => (
           <div
             key={message.id}
@@ -502,7 +501,7 @@ const ChatBot = () => {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type your message..."
-          className="flex-1"
+          className="flex-1 bg-black text-white border border-muted focus:border-primary focus:ring-0"
           autoComplete="off"
           autoFocus={isOpen}
         />

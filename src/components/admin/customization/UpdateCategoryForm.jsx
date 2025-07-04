@@ -55,7 +55,7 @@ function UpdateCategoryForm({category, onSuccess, onCancel }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 p-6 bg-gray-50 rounded-lg shadow">
+    <form onSubmit={handleSubmit} className="space-y-6 p-6 bg-black rounded-lg shadow">
     
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">

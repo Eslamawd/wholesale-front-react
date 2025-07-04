@@ -39,12 +39,12 @@ export async function addService(serviceData) {
  * PUT /api/services/{id}
  * @param serviceData: كائن الخدمة يحتوي على id وحقول أخرى محدثة
  */
-export async function updateService(id, serviceData) {
+export async function updateService(id, payload) {
 
-  const response = await api().patch(`api/admin/services/${id}`, serviceData, {
+  const response = await api().post(`api/admin/services/${id}`, payload, {
     headers: {
-      "Content-Type": "multipart/form-data", // إذا كنت تستخدم FormData
-    },
+      "Content-Type": "multipart/form-data",
+     },
   });
   return response.data;
 }

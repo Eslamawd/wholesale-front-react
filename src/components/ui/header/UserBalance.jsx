@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { CreditCard, ShoppingBag } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../button';
 import { useAuth } from '../../../context/AuthContext'; // 
 import { motion } from 'framer-motion';
 import { toast } from 'sonner'; // Ensure you have sonner ins
-import { getBalanceUser } from '../../../lib/walletApi';
+import { getBalanceAdmin, getBalanceUser } from '../../../lib/walletApi';
 
 
 const UserBalance = () => {
@@ -18,8 +18,11 @@ const UserBalance = () => {
 
   const fetchUserBalance = async () => {
 
+    if (user.role === 'admin') {
     try {
-      const response = await getBalanceUser()
+        const response = await getBalanceAdmin()
+    
+      
       const safeBalance = Math.max(0, response.balance || 0);
 
       if (userBalance !== 0 && safeBalance !== userBalance) {
@@ -44,6 +47,34 @@ const UserBalance = () => {
     } finally {
       setIsLoading(false);
     }
+      } else if (user.role === 'user') {
+        try {
+          const response = await getBalanceUser(user.id);
+          const safeBalance = Math.max(0, response.balance || 0);
+
+          if (userBalance !== 0 && safeBalance !== userBalance) {
+            setPrevBalance(userBalance);
+            setShowBalanceUpdated(true);
+
+            if (safeBalance < 10) {
+              toast.warning('Your balance is low', {
+                description: 'Please add funds to continue making purchases.'
+              });
+            }
+
+            setTimeout(() => {
+              setShowBalanceUpdated(false);
+            }, 3000);
+          }
+
+          setUserBalance(safeBalance);
+        } catch (error) {
+          console.error('Error fetching user balance:', error);
+          toast.error('Failed to fetch balance');
+        } finally {
+          setIsLoading(false);
+        }
+      }
   };
 
   useEffect(() => {
@@ -54,7 +85,7 @@ const UserBalance = () => {
 
     fetchUserBalance();
 
-    const intervalId = setInterval(fetchUserBalance, 60000);
+    const intervalId = setInterval(fetchUserBalance, 30 * 60 * 1000); 
 
     const handlePurchaseEvent = () => {
       fetchUserBalance();
@@ -124,6 +155,17 @@ const UserBalance = () => {
           </span>
         )}
       </Button>
+      {
+        user && (
+         <Link to="/checkout">
+        <Button variant="default" size="sm" className=" flex gap-2 items-center p-2 ml-2">
+          <ShoppingBag className="h-4 w-4" />
+          <span>Cart</span>
+        </Button>
+      </Link>
+      
+        )
+      }
     </div>
     
     

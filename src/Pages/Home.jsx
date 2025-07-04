@@ -22,6 +22,7 @@ import { Card, CardContent } from '../components/ui/Card';
 
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/Input';
+import { useAuth } from '../context/AuthContext';
 
 const serviceCategories = [
   {
@@ -120,7 +121,7 @@ const testimonials = [
 
 
 function Home() {
-    
+  const { user } = useAuth()  
   const navigate = useNavigate();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
@@ -448,11 +449,16 @@ const renderCategoryIcon = (iconName) => iconsMap[iconName] || <Zap className="h
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-4 justify-end">
+                  { user & (
+
                   <Link to="/register" className="w-full sm:w-auto">
                     <Button size="lg" variant="secondary" className="w-full sm:w-auto">
                       Sign Up Now
                     </Button>
                   </Link>
+                  )
+
+                  }
                   <Link to="/services" className="w-full sm:w-auto">
                     <Button size="lg" variant="outline" className=" border-white  hover:bg-white/20 w-full sm:w-auto">
                       Browse Services
@@ -466,7 +472,7 @@ const renderCategoryIcon = (iconName) => iconsMap[iconName] || <Zap className="h
 
         {/* Purchase Confirmation Dialog */}
        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-  <DialogContent className="max-w-md bg-white p-6 rounded-lg shadow-lg">
+  <DialogContent className="max-w-md bg-black  p-6 rounded-lg shadow-lg">
     <DialogHeader>
       <DialogTitle>Confirm Purchase</DialogTitle>
       <DialogDescription>

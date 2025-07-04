@@ -32,7 +32,7 @@ function NavigationLinks() {
   return (
     <nav className="hidden md:flex items-center space-x-4">
       <Button 
-        variant="ghost" 
+        variant="default" 
         size="icon" 
         className="text-green-500 hover:text-white hover:bg-green-500"
         onClick={handleWhatsAppRedirect}
@@ -69,17 +69,12 @@ function NavigationLinks() {
             <span>Logout</span>
           </Button>
           
-      <Link to="/checkout">
-        <Button variant="default" size="sm" className="flex gap-2 items-center">
-          <ShoppingBag className="h-4 w-4" />
-          <span>Cart</span>
-        </Button>
-      </Link>
+      
         </>
       ) : (
         <>
           <Link to="/login">
-            <Button variant="outline" size="sm" className="flex gap-2 items-center">
+            <Button  variant="default" size="sm" className="flex  gap-2 items-center">
               <LogIn className="h-4 w-4" />
               <span>Login</span>
             </Button>

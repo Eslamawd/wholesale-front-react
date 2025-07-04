@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { updateService } from "../../../lib/serviceApi.js";
 import { loadCategory } from "../../../lib/categoryApi.js";
 
-export default function UpdateServiceForm({ service, onSubmit, onCancel }) {
+export default function UpdateServiceForm({ service, onSuccess, onCancel }) {
   // هنا نهيئ الحالة بقيم 'product' عند فتح المكوّن
   const [formData, setFormData] = useState({
     name: service?.title || "",
@@ -82,46 +82,56 @@ export default function UpdateServiceForm({ service, onSubmit, onCancel }) {
   };
 
   // 4) عند الضغط على "Update Service"
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name.trim()) {
-      toast.error("اسم الخدمة مطلوب");
-      return;
+        toast.error("اسم الخدمة مطلوب");
+        return;
     }
     if (!formData.categoryId) {
-      toast.error("يرجى اختيار الفئة");
-      return;
+        toast.error("يرجى اختيار الفئة");
+        return;
     }
 
     setIsLoading(true);
     try {
-      const payload = new FormData();
-      payload.append("title", formData.name);
-      payload.append("description", formData.description);
-      payload.append("price", formData.price.toString());
-      payload.append("category_id", formData.categoryId);
+        const payload = new FormData();
+        payload.append("title", formData.name);
+        payload.append("description", formData.description);
+        payload.append("price", formData.price);
+        payload.append("category_id", formData.categoryId);
+        payload.append("_method", "PATCH"); // Laravel expects this for updates
       if (formData.imageFile) {
-        payload.append("image_path", formData.imageFile);
-      }
+            payload.append("image_path", formData.imageFile);
+        }
 
-      // نرسل PUT (أو POST إلى مسار تحديث) مع الـ FormData
-      console.log(payload)
-      const res = await updateService(service.id, payload)
-     
-      if (res.service) {
-        onSubmit && onSubmit(res.service)
-         toast.success(`${res.message}`);
-      }
+
+        const res = await updateService(service.id, payload);
+        
+         if (res.service.title && res.service.description && res.service.price && res.service.image_path) {
+              toast.success("Created service successfully!");
+              onSuccess && onSuccess(res.service);
+             } else {
+             // Handle cases where res.service might not be present but no error was thrown
+            toast.warning("Service updated, but response was unexpected.");
+        }
     } catch (err) {
-      console.error("Error updating service:", err);
-      toast.error("فشل في تحديث الخدمة");
+        console.error("Error updating service:", err);
+        // Improved error message for the user
+        toast.error(`فشل في تحديث الخدمة: ${err.response?.data?.message || 'خطأ غير معروف'}`);
+        // If it's a validation error, you might want to show specific messages
+        if (err.response && err.response.status === 422) {
+            Object.values(err.response.data.errors).forEach(messages => {
+                messages.forEach(message => toast.error(message));
+            });
+        }
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
-  };
+};
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 p-6 bg-gray-50 rounded-lg shadow">
+    <form onSubmit={handleSubmit} className="space-y-6 p-6 bg-black rounded-lg shadow">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-white rounded shadow-sm">
         <TabsList className="grid grid-cols-2">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>

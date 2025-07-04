@@ -119,7 +119,7 @@ export default function CreateServiceForm({ onSuccess, onCancel }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 p-6 bg-gray-50 rounded-lg shadow">
+    <form onSubmit={handleSubmit} className="space-y-6 p-6 bg-black rounded-lg shadow">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-white rounded shadow-sm">
         <TabsList className="grid grid-cols-2">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
