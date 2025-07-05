@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom';
 import { Store } from 'lucide-react';
+import viteLogo from '../../../../public/vite.jpg'; 
 
 
 function Logo() {
@@ -10,7 +11,7 @@ function Logo() {
       className="flex items-center transition-opacity hover:opacity-80"
     >
       <div className="flex items-center">
-        <Store className="h-6 w-6 mr-2" />
+        <img src={viteLogo} alt="ServexLB Logo" className="w-16 h-16 mr-2 rounded-full" /> 
         <span className="font-bold text-xl">ServexLB</span>
       </div>
     </Link>
