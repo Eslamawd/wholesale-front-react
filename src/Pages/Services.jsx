@@ -9,7 +9,7 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "../components/ui/Select"; // Import Select components
+} from "../components/ui/select"; // Import Select components
 import { toast } from "sonner";
 import ServiceCard from "../components/services/ServiceCard";
 import { loadServices } from "../lib/serviceApi";
