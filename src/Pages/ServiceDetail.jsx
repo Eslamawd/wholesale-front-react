@@ -23,7 +23,7 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "../components/ui/Select";
+} from "../components/ui/select";
 
 import { getServie } from '../lib/serviceApi';
 import { addOrder } from '../lib/orderApi';
