@@ -14,7 +14,6 @@ import { toast } from "sonner";
 import ServiceCard from "../components/services/ServiceCard";
 import { loadServices } from "../lib/serviceApi";
 import { loadCategory } from "../lib/categoryApi";
-import { Button } from "../components/ui/button"; // Assuming you might use this for a retry button
 
 const ServicesPage = () => {
     const [searchQuery, setSearchQuery] = useState("");
