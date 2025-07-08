@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import MainLayout from '../components/MainLayout'
 import { motion } from 'framer-motion';
 
@@ -23,74 +23,11 @@ import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/Input';
 import { useAuth } from '../context/AuthContext';
+import { loadServices } from '../lib/serviceApi';
+import { loadCategory } from '../lib/categoryApi';
+import { toast } from 'sonner';
 
-const serviceCategories = [
-  {
-    id: 1,
-    icon: "play-circle",
-    name: "Streaming",
-    description: "High-quality streaming services for movies and music"
-  },
-  {
-    id: 2,
-    icon: "shopping-cart",
-    name: "Music",
-    description: "Unlimited music streaming for you and your family"
-  
-  },
-  {
-    id: 3,
-    icon: "gamepad-2",
-    name: "Gaming",
-    description: "In-game currency for popular mobile games"
-   
-  },
-  {
-    id: 4,
-    icon: "thumbs-up",
-    name: "Social Media",
-    description: "Boost your social media presence with real followers"
-    
-  }
-];
-const featuredServices = [
-  {
-    id: 1,
-    name: "Netflix Premium",
-    description: "Full 4K streaming plan with unlimited access",
-    price: 15.99,
-    image: "https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?q=80&w=2070&auto=format&fit=crop",
-    category: "streaming",
-    popular: true
-  },
-  {
-    id: 2,
-    name: "Spotify Family",
-    description: "Music streaming for up to 6 family members",
-    price: 14.99,
-    image: "https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?q=80&w=1974&auto=format&fit=crop",
-    category: "streaming",
-    popular: false
-  },
-  {
-    id: 3,
-    name: "PUBG Mobile UC",
-    description: "1000 Unknown Cash for in-game purchases",
-    price: 19.99,
-    image: "https://images.unsplash.com/photo-1560253023-3ec5085aaab8?q=80&w=2070&auto=format&fit=crop",
-    category: "gaming",
-    popular: true
-  },
-  {
-    id: 4,
-    name: "Instagram Followers",
-    description: "Add 1000 high-quality followers to your profile",
-    price: 9.99,
-    image: "https://images.unsplash.com/photo-1611262588024-d12430b98920?q=80&w=2074&auto=format&fit=crop",
-    category: "social",
-    popular: true
-  }
-];
+
 const testimonials = [
   {
     id: 1,
@@ -123,37 +60,50 @@ const testimonials = [
 function Home() {
   const { user } = useAuth()  
   const navigate = useNavigate();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedService, setSelectedService] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [services, setServices] = useState([]);
 
 
-const iconsMap = {
-  "play-circle": <PlayCircle className="h-6 w-6 text-primary" />,
-  "gamepad-2": <Gamepad2 className="h-6 w-6 text-primary" />,
-  "thumbs-up": <ThumbsUp className="h-6 w-6 text-primary" />,
-  "shopping-cart": <ShoppingCart className="h-6 w-6 text-primary" />,
-};
-
-const renderCategoryIcon = (iconName) => iconsMap[iconName] || <Zap className="h-6 w-6 text-primary" />;
 
 
-  const handlePurchaseService = () => {
-    // Here you would typically handle the purchase logic, e.g., API call to process payment
-    console.log(`Purchasing service: ${selectedService.name}`);
-    
-    // Close the dialog after purchase
-    setIsDialogOpen(false);
-    
-    // Redirect to checkout or confirmation page
-    navigate('/checkout');
-  }
+  useEffect(() => {
+        const fetchData = async () => {
+          
+            try {
+                const [servicesData, categoriesRes] = await Promise.all([
+                    loadServices(),
+                    loadCategory()
+                ]);
+
+                if (servicesData && Array.isArray(servicesData.products.data)) {
+                    setServices(servicesData.products.data);
+                } else {
+                    // Handle case where servicesData.services is not an array
+                    setServices([]);
+                    toast.warning("No services found from the API.");
+                }
+
+                if (categoriesRes && Array.isArray(categoriesRes.categories.data)) {
+                    setCategories(categoriesRes.categories.data);
+                } else {
+                    setCategories([]);
+                    toast.warning("No categories found from the API.");
+                }
+            } catch (err) {
+                console.error("Error loading data:", err);
+                toast.error("Failed to load services.");
+            } 
+        };
+
+        fetchData();
+    }, []); // Empty dependency array means this runs once on mount
+
+
+
 
     
   // Show purchase confirmation dialog
-  const showPurchaseConfirmation = (service) => {
-    setSelectedService(service);
-    setIsDialogOpen(true);
-  };
+
 
 
   return (
@@ -258,19 +208,21 @@ const renderCategoryIcon = (iconName) => iconsMap[iconName] || <Zap className="h
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {serviceCategories.map((category) => (
+              {categories.map((category) => (
                 <Link to={`/services?category=${category.id}`} key={category.id}>
                   <Card className="bg-card h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                     <CardContent className="p-6 flex flex-col h-full">
-                      <div className="bg-primary/10 rounded-full p-3 w-12 h-12 flex items-center justify-center mb-4">
-                        {renderCategoryIcon(category.icon || "box")}
+                      <div className="bg-primary/10 rounded-full  flex items-center justify-center ">
+                        <img 
+                          src={category.image}
+                          alt={category.name_en}
+                          className="h-full w-full object-cover"
+                        />
                       </div>
                       <h3 className="text-xl font-semibold mb-2">
-                        {category.name}
+                        {category.name_ar}
                       </h3>
-                      <p className="text-muted-foreground mb-4 flex-grow">
-                        {category.description}
-                      </p>
+                     
                       <div className="text-primary font-medium flex items-center mt-auto">
                         Browse Services
                         <ArrowRight className="ml-2 h-4 w-4" />
@@ -280,7 +232,14 @@ const renderCategoryIcon = (iconName) => iconsMap[iconName] || <Zap className="h
                 </Link>
               ))}
             </div>
+            
           </div>
+           <Link to="/categories">
+                <Button size="lg" variant="outline" className="mt-5">
+                  View All Categories
+                  <ArrowRight className="ml-2  h-4 w-4" />
+                </Button>
+              </Link>
         </section>
 
         {/* Featured Services Section */}
@@ -296,7 +255,7 @@ const renderCategoryIcon = (iconName) => iconsMap[iconName] || <Zap className="h
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {featuredServices.map((service) => (
+              {services.map((service) => (
                 <Card key={service.id} className="overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                   <div className="relative h-48">
                     <img 
@@ -304,29 +263,31 @@ const renderCategoryIcon = (iconName) => iconsMap[iconName] || <Zap className="h
                       alt={service.name} 
                       className="w-full h-full object-cover"
                     />
-                    {service.popular && (
-                      <div className="absolute top-2 right-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-md">
-                        Popular
-                      </div>
-                    )}
+                  
                   </div>
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="text-lg font-semibold">{service.name}</h3>
+                      <h3 className="text-lg font-semibold">{service.name_ar}</h3>
                       <span className="text-lg font-bold">${service.price}</span>
                     </div>
-                    <p className="text-muted-foreground text-sm mb-4">{service.description}</p>
                     <div className="flex items-center justify-between">
                       <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
-                        {service.category}
+                        {service.category.name_ar}
                       </span>
-                      <Button 
+                      {user ? ( <Button 
                         size="sm" 
-                        onClick={() => showPurchaseConfirmation(service)}
+                        onClick={()=> navigate(`/services/${service.id}`)}
                       >
                         <CreditCard className="h-4 w-4 mr-2" />
                         Order Now
-                      </Button>
+                      </Button>) : ( <Button 
+                        size="sm" 
+                        onClick={()=> navigate(`/login`)}
+                      >
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        Order Now
+                      </Button>)}
+                     
                     </div>
                   </CardContent>
                 </Card>
@@ -470,22 +431,7 @@ const renderCategoryIcon = (iconName) => iconsMap[iconName] || <Zap className="h
           </div>
         </section>
 
-        {/* Purchase Confirmation Dialog */}
-       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-  <DialogContent className="max-w-md bg-black  p-6 rounded-lg shadow-lg">
-    <DialogHeader>
-      <DialogTitle>Confirm Purchase</DialogTitle>
-      <DialogDescription>
-        Are you sure you want to purchase <strong>{selectedService?.name}</strong> for ${selectedService?.price}?
-      </DialogDescription>
-    </DialogHeader>
-    <DialogFooter>
-      <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-      <Button onClick={handlePurchaseService}>Confirm</Button>
-    </DialogFooter>
-  </DialogContent>
-</Dialog>
-
+   
       </motion.div>
     </MainLayout>
   )

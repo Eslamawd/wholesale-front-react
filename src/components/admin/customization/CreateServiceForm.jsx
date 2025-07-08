@@ -5,20 +5,12 @@ import { Button } from "../../ui/button.jsx";
 import { Input } from "../../ui/Input.jsx";
 import { Textarea } from "../../ui/textarea.jsx";
 import { Label } from "../../ui/Label.jsx";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../ui/select.jsx";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs.jsx";
 import { Separator } from "../../ui/Separator.jsx";
 import { ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { addService } from "../../../lib/serviceApi.js";
-import { loadCategory } from "../../../lib/categoryApi.js";
-
 
 export default function CreateServiceForm({ onSuccess, onCancel }) {
   // فقط الحقول اللازمة لإنشاء خدمة جديدة
@@ -31,25 +23,8 @@ export default function CreateServiceForm({ onSuccess, onCancel }) {
     categoryId: ""
   });
 
-  const [serviceCategories, setServiceCategories] = useState([]);
   const [activeTab, setActiveTab] = useState("basic");
   const [isLoading, setIsLoading] = useState(false);
-  useEffect(() => {
-    async function fetchCategories() {
-      try {
-        const res = await loadCategory()
-        if (res.categories) { 
-          toast.success("Categories loaded successfully!");
-          setServiceCategories(res.categories || []);
-        }
-        toast.success("Categories Get");
-      } catch (err) {
-        console.error("Failed to fetch categories:", err);
-        toast.error("فشل في جلب الفئات");
-      }
-    }
-    fetchCategories();
-  }, []);
 
   // 2) تغيير قيم الحقول النصية والأرقام والقائمة
   const handleInputChange = (e) => {
@@ -59,9 +34,6 @@ export default function CreateServiceForm({ onSuccess, onCancel }) {
   const handleNumberChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: parseFloat(value) || 0 }));
-  };
-  const handleSelectChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   // 3) رفع الصورة: نخزن الملف والمعاينة فقط (بلا حفظ مسبق)
@@ -105,7 +77,7 @@ export default function CreateServiceForm({ onSuccess, onCancel }) {
       }
      const res = await addService(payload);
    
-     if (res.service.title && res.service.description && res.service.price && res.service.image_path) {
+     if (res.service.name_ar && res.service.price && res.service.image) {
       toast.success("Created service successfully!");
       onSuccess && onSuccess(res.service);
      }
@@ -120,7 +92,7 @@ export default function CreateServiceForm({ onSuccess, onCancel }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 p-6 bg-black rounded-lg shadow">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-white rounded shadow-sm">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-black rounded shadow-sm">
         <TabsList className="grid grid-cols-2">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
           <TabsTrigger value="pricing">Pricing</TabsTrigger>
@@ -141,43 +113,10 @@ export default function CreateServiceForm({ onSuccess, onCancel }) {
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="categoryId">Category</Label>
-              <Select
-                value={formData.categoryId}
-                onValueChange={(val) => handleSelectChange("categoryId", val)}
-              >
-                <SelectTrigger name="categoryId" id="categoryId">
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                
-{serviceCategories
-  .map((cat) => (
-    <SelectItem key={cat.id} value={cat.id}>
-      {cat.name}
-    </SelectItem>
-  ))}
-</SelectContent>
-
-                
            
-              </Select>
-            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              placeholder="Enter service description"
-              rows={3}
-            />
-          </div>
-
+         
        
           <div className="space-y-2">
             <Label htmlFor="image">

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard, ShoppingBag } from 'lucide-react';
+import { CreditCard, Loader2, ShoppingBag } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../button';
 import { useAuth } from '../../../context/AuthContext'; // 
 import { motion } from 'framer-motion';
 import { toast } from 'sonner'; // Ensure you have sonner ins
-import { getBalanceAdmin, getBalanceUser } from '../../../lib/walletApi';
+import {  getBalanceUser } from '../../../lib/walletApi';
 
 
 const UserBalance = () => {
@@ -17,37 +17,7 @@ const UserBalance = () => {
   const navigate = useNavigate();
 
   const fetchUserBalance = async () => {
-
-    if (user.role === 'admin') {
-    try {
-        const response = await getBalanceAdmin()
-    
-      
-      const safeBalance = Math.max(0, response.balance || 0);
-
-      if (userBalance !== 0 && safeBalance !== userBalance) {
-        setPrevBalance(userBalance);
-        setShowBalanceUpdated(true);
-
-        if (safeBalance < 10) {
-          toast.warning('Your balance is low', {
-            description: 'Please add funds to continue making purchases.'
-          });
-        }
-
-        setTimeout(() => {
-          setShowBalanceUpdated(false);
-        }, 3000);
-      }
-
-      setUserBalance(safeBalance);
-    } catch (error) {
-      console.error('Error fetching user balance:', error);
-      toast.error('Failed to fetch balance');
-    } finally {
-      setIsLoading(false);
-    }
-      } else if (user.role === 'user') {
+  if (user) {
         try {
           const response = await getBalanceUser(user.id);
           const safeBalance = Math.max(0, response.balance || 0);
@@ -114,7 +84,7 @@ const UserBalance = () => {
 
   if ( isLoading) {
       return (
-    <div className="w-24  absolute h-8 bg-gray-200 rounded-md animate-pulse mr-2" />
+   <Loader2 className="h-8 w-8 animate-spin text-primary" />
   );
   }
 

@@ -22,6 +22,8 @@ import Account from './Pages/Account'
 import Payment from './Pages/Payment'
 import { User } from 'lucide-react'
 import UserRoute from './components/UserRoute'
+import Categories from './Pages/Categories'
+import CategoriesDetail from './Pages/CategoriesDetail'
 
 function App() {
 
@@ -41,6 +43,8 @@ function App() {
                         <Route path="/register" element={<Register />} />
                         <Route path="/services" element={<Services />} />
                         <Route path="/services/:id" element={<ServiceDetail />} />
+                        <Route path="/categories/" element={<Categories/>} />
+                        <Route path="/categories/:id" element={<CategoriesDetail />} />
                         <Route path="/about" element={<About />} />
                         <Route path="/contact" element={<Contact />} />
                         <Route element={

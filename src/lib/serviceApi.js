@@ -6,13 +6,13 @@ import api from "../api/axiosClient";
  * جلب كل الخدمات
  * GET /api/services
  */
-export async function loadServices() {
-  const response = await api().get("api/services");
+export async function loadServices(page) {
+  const response = await api().get(`api/product?page=${page || 1}`);
   // نفترض أنّ الـ response.data هو مصفوفة الخدمات
   return response.data;
 }
 export async function getServie(id) {
-  const response = await api().get(`api/services/${id}`);
+  const response = await api().get(`api/product/${id}`);
   // نفترض أنّ الـ response.data هو مصفوفة الخدمات
   return response.data;
 }
@@ -26,7 +26,7 @@ export async function addService(serviceData) {
   // لا حاجة لتمرير الـ id، Laravel سيولّد id تلقائيًا (بما أننا استخدمنا auto-increment)
 
 
-  const response = await api().post("api/admin/services", serviceData, {
+  const response = await api().post("api/admin/product", serviceData, {
     headers: {
       "Content-Type": "multipart/form-data", // إذا كنت تستخدم FormData
     },
@@ -41,7 +41,7 @@ export async function addService(serviceData) {
  */
 export async function updateService(id, payload) {
 
-  const response = await api().post(`api/admin/services/${id}`, payload, {
+  const response = await api().post(`api/admin/product/${id}`, payload, {
     headers: {
       "Content-Type": "multipart/form-data",
      },
@@ -54,7 +54,7 @@ export async function updateService(id, payload) {
  * DELETE /api/services/{id}
  */
 export async function deleteService(id) {
-  const response = await api().delete(`api/admin/services/${id}`);
+  const response = await api().delete(`api/admin/product/${id}`);
   return response.data;
 }
 

@@ -3,40 +3,39 @@ import { motion } from "framer-motion";
 import MainLayout from "../components/MainLayout";
 import { Search, Loader2 } from "lucide-react"; // Added Loader2 icon
 import { Input } from "../components/ui/Input";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "../components/ui/select"; // Import Select components
+
 import { toast } from "sonner";
 import ServiceCard from "../components/services/ServiceCard";
 import { loadServices } from "../lib/serviceApi";
-import { loadCategory } from "../lib/categoryApi";
 
 const ServicesPage = () => {
     const [searchQuery, setSearchQuery] = useState("");
-    const [selectedCategory, setSelectedCategory] = useState("all"); // State for selected category
-    const [categories, setCategories] = useState([]);
+
     const [services, setServices] = useState([]);
     const [filteredServices, setFilteredServices] = useState([]);
     const [loading, setLoading] = useState(true); // Loading state
     const [error, setError] = useState(null); // Error state for fetch failures
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const [lastPage, setLastPage] = useState(1);
+    const [total, setTotal] = useState(0);
+
     useEffect(() => {
-        const fetchData = async () => {
+        const fetchData = async (page = 1) => {
             setLoading(true);
             setError(null);
             try {
-                const [servicesData, categoriesRes] = await Promise.all([
-                    loadServices(),
-                    loadCategory()
+                const [servicesData] = await Promise.all([
+                    loadServices(page),
+                   
                 ]);
 
-                if (servicesData && Array.isArray(servicesData.services)) {
-                    setServices(servicesData.services);
-                    setFilteredServices(servicesData.services); // Initialize filtered services
+                if (servicesData && Array.isArray(servicesData.products.data)) {
+                    setServices(servicesData.products.data);
+                    setFilteredServices(servicesData.products.data);
+                    setCurrentPage(servicesData.products.current_page);
+                    setLastPage(servicesData.products.last_page);
+                    setTotal(servicesData.products.total);
                 } else {
                     // Handle case where servicesData.services is not an array
                     setServices([]);
@@ -44,12 +43,6 @@ const ServicesPage = () => {
                     toast.warning("No services found from the API.");
                 }
 
-                if (categoriesRes && Array.isArray(categoriesRes.categories)) {
-                    setCategories(categoriesRes.categories);
-                } else {
-                    setCategories([]);
-                    toast.warning("No categories found from the API.");
-                }
             } catch (err) {
                 console.error("Error loading data:", err);
                 setError("Failed to load services. Please try again later.");
@@ -59,31 +52,27 @@ const ServicesPage = () => {
             }
         };
 
-        fetchData();
-    }, []); // Empty dependency array means this runs once on mount
+        fetchData(currentPage);
+        window.scrollTo(0, 0);
+    }, [currentPage]); // Empty dependency array means this runs once on mount
 
     // Effect for filtering based on search query and selected category
     useEffect(() => {
         let currentFiltered = services;
 
-        // Apply category filter first
-        if (selectedCategory !== "all") {
-            currentFiltered = currentFiltered.filter(
-                service => service.category_id && service.category_id === parseInt(selectedCategory)
-            );
-        }
-
+      
         // Apply search query filter
         if (searchQuery) {
             currentFiltered = currentFiltered.filter(
                 service =>
-                    (service.title && service.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
-                    (service.description && service.description.toLowerCase().includes(searchQuery.toLowerCase()))
+                    (service.name_ar && service.name_ar.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                    (service.name_en && service.name_en.toLowerCase().includes(searchQuery.toLowerCase()))
             );
         }
 
         setFilteredServices(currentFiltered);
-    }, [searchQuery, selectedCategory, services]);
+     
+    }, [searchQuery, services]);
 
 
     return (
@@ -113,21 +102,7 @@ const ServicesPage = () => {
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
-                    {categories.length > 0 && (
-                        <Select onValueChange={setSelectedCategory} value={selectedCategory}>
-                            <SelectTrigger className="md:w-[200px] w-full">
-                                <SelectValue placeholder="Select Category" />
-                            </SelectTrigger>
-                            <SelectContent className='bg-black text-white'>
-                                <SelectItem value="all">All Categories</SelectItem>
-                                {categories.map(category => (
-                                    <SelectItem  key={category.id} value={String(category.id)}>
-                                        {category.name || `Category ${category.id}`} {/* Use name if available, else a placeholder */}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    )}
+  
                 </div>
 
                 {/* Content Display based on Loading/Error/Data */}
@@ -147,7 +122,7 @@ const ServicesPage = () => {
                     <div className="text-center py-12">
                         <h2 className="text-xl font-bold mb-4">No Services Found</h2>
                         <p className="text-muted-foreground">
-                            {searchQuery || selectedCategory !== "all"
+                            {searchQuery 
                                 ? "Your search and filter returned no results."
                                 : "There are no services available at the moment."}
                         </p>
@@ -161,7 +136,32 @@ const ServicesPage = () => {
                             />
                         ))}
                     </div>
+                    
                 )}
+             
+    <div className="flex justify-center items-center gap-2 mt-8">
+        <button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+        >
+            Prev
+        </button>
+
+        <span className="text-sm text-muted-foreground">
+            Page {currentPage} of {lastPage}  — Total: {total} services
+        </span>
+
+        <button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, lastPage))}
+            disabled={currentPage === lastPage}
+            className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+        >
+            Next
+        </button>
+    </div>
+
+
             </motion.div>
         </MainLayout>
     );

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card";
 import { Button } from "../ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { PlusCircle, Pencil, Trash2, Search } from "lucide-react";
+import { PlusCircle, Pencil, Trash2, Search, Loader2 } from "lucide-react";
 import { Input } from "../ui/Input";
 import {
   Dialog,
@@ -28,38 +28,60 @@ import { toast } from "sonner";
 import CreateServiceForm from "./customization/CreateServiceForm";
 import UpdateServiceForm from "./customization/UpdateServiceForm";
 import { deleteService, loadServices } from "../../lib/serviceApi";
-import { loadCategory } from "../../lib/categoryApi";
 
 const AdminServices = () => {
   const [services, setServices] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [selectedService, setSelectedService] = useState(null);
+  
+  const [filteredServices, setFilteredServices] = useState([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const [isNew, setIsNew] = useState(false);
   const [isUpdate, setIsUpdate] = useState(false);
+   const [loading, setLoading] = useState(true); // Loading state
+      const [error, setError] = useState(null); // Error state for fetch failures
+  
+      const [currentPage, setCurrentPage] = useState(1);
+      const [lastPage, setLastPage] = useState(1);
+      const [total, setTotal] = useState(0);
+  
 
-  useEffect(() => {
-    const fetchServices = async () => {
-      try {
-        const [data, res] = await Promise.all([loadServices(), loadCategory()]);
-        if (data.services) {
-          setServices(data.services);
-        }
-        if (res.categories) {
-          setCategories(res.categories);
-          setActiveTab(res.categories[0]?.id?.toString() || "");
-        }
-      } catch (error) {
-        console.error("Error loading services:", error);
-        toast.error("Failed to load services");
-      }
-    };
-    fetchServices();
-  }, []);
+ useEffect(() => {
+        const fetchData = async (page = 1) => {
+            setLoading(true);
+            setError(null);
+            try {
+                const [servicesData] = await Promise.all([
+                    loadServices(page),
+                   
+                ]);
+
+                if (servicesData && Array.isArray(servicesData.products.data)) {
+                    setServices(servicesData.products.data);
+                    setFilteredServices(servicesData.products.data);
+                    setCurrentPage(servicesData.products.current_page);
+                    setLastPage(servicesData.products.last_page);
+                    setTotal(servicesData.products.total);
+                } else {
+                    // Handle case where servicesData.services is not an array
+                    setServices([]);
+                    toast.warning("No services found from the API.");
+                }
+
+            } catch (err) {
+                console.error("Error loading data:", err);
+                setError("Failed to load services. Please try again later.");
+                toast.error("Failed to load services.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData(currentPage);
+        window.scrollTo(0, 0);
+    }, [currentPage]); // Empty dependency array means this runs once on mount
 
   const handleEditService = (service) => {
     setSelectedService(service);
@@ -97,12 +119,23 @@ const AdminServices = () => {
     }
   };
 
-  const filteredServices = services.filter(
-    (s) =>
-      (!activeTab || s.category_id?.toString() === activeTab) &&
-      (s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.description?.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+   useEffect(() => {
+         let currentFiltered = services;
+ 
+       
+         // Apply search query filter
+         if (searchQuery) {
+             currentFiltered = currentFiltered.filter(
+                 service =>
+                     (service.name_ar && service.name_ar.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                     (service.name_en && service.name_en.toLowerCase().includes(searchQuery.toLowerCase()))
+             );
+         }
+ 
+         setFilteredServices(currentFiltered);
+      
+     }, [searchQuery, services]);
+ 
 
   return (
     <div className="space-y-6">
@@ -125,24 +158,58 @@ const AdminServices = () => {
         />
       </div>
 
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v)}>
-        <TabsList className="mb-4 overflow-x-auto">
-          <TabsTrigger key={'0'} value="" >All</TabsTrigger>
-          {categories?.map((category) => (
-            <TabsTrigger key={category.id} value={category.id.toString()}>
-              {category.name}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+           {loading ? (
+                    <div className="flex justify-center items-center h-64">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <span className="ml-2 text-muted-foreground">Loading services...</span>
+                    </div>
+                ) : error ? (
+                    <div className="text-center py-12">
+                        <h2 className="text-xl font-bold text-destructive mb-4">Error Loading Services</h2>
+                        <p className="text-muted-foreground mb-6">{error}</p>
+                        {/* Optionally add a retry button */}
+                        {/* <Button onClick={() => window.location.reload()}>Retry</Button> */}
+                    </div>
+                ) : filteredServices.length === 0 ? (
+                    <div className="text-center py-12">
+                        <h2 className="text-xl font-bold mb-4">No Services Found</h2>
+                        <p className="text-muted-foreground">
+                            {searchQuery 
+                                ? "Your search and filter returned no results."
+                                : "There are no services available at the moment."}
+                        </p>
+                    </div>
+                ) : (
 
-        <TabsContent value={activeTab} className="space-y-4">
           <ServiceList
             services={filteredServices}
             onEdit={handleEditService}
             onDelete={handleDeleteService}
           />
-        </TabsContent>
-      </Tabs>
+                )}
+                 <div className="flex justify-center items-center gap-2 mt-8">
+        <button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+        >
+            Prev
+        </button>
+
+        <span className="text-sm text-muted-foreground">
+            Page {currentPage} of {lastPage}  — Total: {total} services
+        </span>
+
+        <button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, lastPage))}
+            disabled={currentPage === lastPage}
+            className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+        >
+            Next
+        </button>
+    </div>
+
+     
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white">
@@ -218,10 +285,10 @@ const ServiceList = ({ services, onEdit, onDelete }) => {
       {services.map((service) => (
         <Card key={service.id} className="overflow-hidden">
           <div className="aspect-video relative bg-gray-100">
-            {service.image_path && (
+            {service.image && (
               <img
-                src={service.image_path}
-                alt={service.title}
+                src={service.image}
+                alt={service.name_ar}
                 className="w-full h-full object-cover"
               
               />
@@ -229,12 +296,12 @@ const ServiceList = ({ services, onEdit, onDelete }) => {
           </div>
 
           <CardHeader className="p-4 pb-0">
-            <CardTitle className="text-lg">{service.title}</CardTitle>
+            <CardTitle className="text-lg">{service.name_ar}</CardTitle>
           </CardHeader>
 
           <CardContent className="p-4">
             <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-              {service.description}
+              {service?.category?.name_ar}
             </p>
 
             <div className="flex items-center justify-between mt-2">

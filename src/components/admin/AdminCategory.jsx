@@ -12,7 +12,7 @@ import {
   TableRow 
 } from "../ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { PlusCircle, Pencil, Trash2, GiftIcon, RotateCw, Zap, Search, ContainerIcon } from "lucide-react";
+import { PlusCircle, Pencil, Trash2, GiftIcon, RotateCw, Zap, Search, ContainerIcon, Loader2 } from "lucide-react";
 import { Input } from "../ui/Input";
 import {
   Dialog,
@@ -50,22 +50,46 @@ const AdminCategory = () => {
   const [isNew, setIsNew] = useState(false);
   const [isUpdate, setIsUpdate] = useState(false);
 
+  
+      const [currentPage, setCurrentPage] = useState(1);
+      const [lastPage, setLastPage] = useState(1);
+      const [total, setTotal] = useState(0);
+      const [loading, setLoading] = useState(true); // حالة التحميل
+      const [error, setError] = useState(null); // حالة الخطأ في التحميل
   // جلب الخدمات عند التحميل
-  useEffect(() => {
-    const fetchCategory = async () => {
-      try {
-        const res = await loadCategory();
-      
-        if (res.categories) {
-          setCategories(res.categories);
-        }
-      } catch (error) {
-        console.error("Error loading category:", error);
-        toast.error("Failed to load category");
-      }
-    };
-    fetchCategory();
-  }, []);
+   useEffect(() => {
+        const fetchData = async (page = 1) => {
+            setLoading(true);
+            setError(null);
+            try {
+                const [ categoriesRes] = await Promise.all([
+                  
+                    loadCategory(page)
+                ]);
+
+                if (categoriesRes && Array.isArray(categoriesRes.categories.data)) {
+                     setCategories(categoriesRes.categories.data);
+                    setCurrentPage(categoriesRes.categories.current_page);
+                    setLastPage(categoriesRes.categories.last_page);
+                    setTotal(categoriesRes.categories.total);
+                } else {
+                    // Handle case where servicesData.services is not an array
+                    setCategories([]);
+                    toast.warning("No services found from the API.");
+                }
+
+            } catch (err) {
+                console.error("Error loading data:", err);
+                setError("Failed to load services. Please try again later.");
+                toast.error("Failed to load services.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData(currentPage);
+        window.scrollTo(0, 0);
+    }, [currentPage]); // Empty dependency array means this runs once on mount
 
 
 
@@ -149,13 +173,48 @@ const AdminCategory = () => {
       </div>
 
    
-     
+           {loading ? (
+                    <div className="flex justify-center items-center h-64">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <span className="ml-2 text-muted-foreground">Loading services...</span>
+                    </div>
+                ) : error ? (
+                    <div className="text-center py-12">
+                        <h2 className="text-xl font-bold text-destructive mb-4">Error Loading Services</h2>
+                        <p className="text-muted-foreground mb-6">{error}</p>
+                        {/* Optionally add a retry button */}
+                        {/* <Button onClick={() => window.location.reload()}>Retry</Button> */}
+                    </div>
+                ) :(
+
   
              <CategoryList
             categories={categories}
             onEdit={handleEditCategory}
             onDelete={handleDeleteCategory}
           />
+                )}
+                         <div className="flex justify-center items-center gap-2 mt-8">
+                        <Button
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+                        >
+                            Prev
+                        </Button>
+                
+                        <span className="text-sm text-muted-foreground">
+                            Page {currentPage} of {lastPage}  — Total: {total} services
+                        </span>
+                
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, lastPage))}
+                            disabled={currentPage === lastPage}
+                            className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+                        >
+                            Next
+                        </button>
+                    </div>
         
        
       {/* حوار الإضافة / التعديل */}
@@ -251,8 +310,9 @@ const CategoryList = ({ categories, onEdit, onDelete }) => {
                         {category.id}
                       </TableCell>
                       <TableCell className="">
-                        {category.name}
+                        {category.name_ar}
                       </TableCell>
+                     
            
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">

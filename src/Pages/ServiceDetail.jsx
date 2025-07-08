@@ -1,98 +1,60 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import {
-    ArrowLeft, Clock, Tag, Check,
-    CreditCard, Minus, Plus, Loader2
-} from 'lucide-react';
-import { Button } from '../components/ui/button';
-import { Badge } from '../components/ui/badge';
-import Header from '../components/Header';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle
-} from "../components/ui/Dialog";
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { ArrowLeft, Minus, Plus, Loader2, CreditCard } from "lucide-react";
+import { toast } from "sonner";
+
+import Header from "../components/Header";
+import { Button } from "../components/ui/button";
+import { Badge } from "../components/ui/badge";
 import { Input } from "../components/ui/Input";
 import { Label } from "../components/ui/Label";
 import {
     Select,
+    SelectTrigger,
     SelectContent,
     SelectItem,
-    SelectTrigger,
-    SelectValue,
+    SelectValue
 } from "../components/ui/select";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter
+} from "../components/ui/Dialog";
 
-import { getServie } from '../lib/serviceApi';
-import { addOrder } from '../lib/orderApi';
-import { toast } from 'sonner';
+import { getServie } from "../lib/serviceApi";
+import { addOrder } from "../lib/orderApi";
+import { useAuth } from "../context/AuthContext";
+import MainLayout from "../components/MainLayout";
 
 const ServiceDetail = () => {
+    const  { user } = useAuth();
     const { id } = useParams();
     const navigate = useNavigate();
     const [service, setService] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [isProcessingPurchase, setIsProcessingPurchase] = useState(false);
-    const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
     const [quantity, setQuantity] = useState(1);
     const [extraParamsInput, setExtraParamsInput] = useState({});
-
-    // State for parsed ZDDK data
-    const [parsedZddkQtyValues, setParsedZddkQtyValues] = useState(null);
-    const [parsedZddkRequiredParams, setParsedZddkRequiredParams] = useState([]);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const res = await getServie(id);
-                const fetchedService = res.service;
-                setService(fetchedService);
+                const fetched = res.product;
+                setService(fetched);
 
-                // --- ZDDK Specific Parsing - CRITICAL FIX HERE ---
-                let qtyValues = fetchedService.zddk_qty_values;
-                if (typeof qtyValues === 'string') {
-                    try {
-                        qtyValues = JSON.parse(qtyValues);
-                    } catch (e) {
-                        console.error("Failed to parse zddk_qty_values:", e);
-                        qtyValues = null; // Set to null if parsing fails
-                    }
-                }
-                setParsedZddkQtyValues(qtyValues);
-
-                let initialQuantity = 1;
-                if (fetchedService.is_zddk_product && qtyValues) {
-                    if (fetchedService.product_type === 'amount' && typeof qtyValues === 'object' && qtyValues.min) {
-                        initialQuantity = parseInt(qtyValues.min);
-                    } else if (fetchedService.product_type === 'specificPackage' && Array.isArray(qtyValues) && qtyValues.length > 0) {
-                        initialQuantity = parseInt(qtyValues[0]); // Default to the first package value
-                    }
-                }
-                setQuantity(initialQuantity);
-
-                let requiredParams = fetchedService.zddk_required_params;
-                if (typeof requiredParams === 'string') {
-                    try {
-                        requiredParams = JSON.parse(requiredParams);
-                    } catch (e) {
-                        console.error("Failed to parse zddk_required_params:", e);
-                        requiredParams = []; // Set to empty array if parsing fails
-                    }
-                }
-                setParsedZddkRequiredParams(Array.isArray(requiredParams) ? requiredParams : []);
-
-                const initialExtraParams = {};
-                (Array.isArray(requiredParams) ? requiredParams : []).forEach(paramName => {
-                    initialExtraParams[paramName] = '';
+                // Initialize user_fields input
+                const initialFields = {};
+                (fetched.user_fields || []).forEach(field => {
+                    initialFields[field.field_name] = '';
                 });
-                setExtraParamsInput(initialExtraParams);
-                // --- End ZDDK Specific Parsing ---
-
+                setExtraParamsInput(initialFields);
             } catch (error) {
-                console.error("Failed to fetch service:", error);
-                toast.error("Failed to load service details.");
+                toast.error("Failed to load service details");
             } finally {
                 setLoading(false);
             }
@@ -101,340 +63,229 @@ const ServiceDetail = () => {
         fetchData();
     }, [id]);
 
-    // Update total price when quantity or service (price, type) changes
-    const totalPrice = React.useMemo(() => {
-        if (!service) return '0.00';
-
-        let calculatedPrice = 0;
-        if (service.is_zddk_product) {
-            if (service.product_type === 'specificPackage') {
-                // For specific packages, the selected quantity IS the price/value
-                calculatedPrice = parseFloat(quantity); 
-            } else if (service.product_type === 'amount') {
-                // For 'amount' products, the 'quantity' selected by the user represents the actual value/price.
-                // The service.price of "0.00" is a placeholder in this case.
-                calculatedPrice = parseFloat(quantity); 
-            } else {
-                // Fallback for other ZDDK product types or if logic needs refinement
-                calculatedPrice = quantity * parseFloat(service.price);
-            }
-        } else {
-            // For non-ZDDK products
-            calculatedPrice = quantity * parseFloat(service.price);
-        }
-        // Ensure the output is always a string with 2 decimal places
-        return calculatedPrice.toFixed(2);
-    }, [quantity, service]);
-
-
-    const handleExtraParamChange = (paramName, value) => {
+    const handleFieldChange = (name, value) => {
         setExtraParamsInput(prev => ({
-            ...prev, // Spread previous state correctly
-            [paramName]: value,
+            ...prev,
+            [name]: value
         }));
-    };
-
-    const handleBuyNow = async () => {
-        if (!service) {
-            toast.error("Service data not available.");
-            return;
-        }
-
-        // Validate required parameters for ZDDK products
-        for (const paramName of parsedZddkRequiredParams) {
-            if (!extraParamsInput[paramName] || extraParamsInput[paramName].trim() === '') {
-                toast.error(`Please enter a value for "${paramName}".`);
-                return; // Stop if any required param is missing
-            }
-        }
-        
-        setIsProcessingPurchase(true);
-
-        const orderData = {
-            services: [{
-                quantity: quantity,
-                id: service.id,
-                extra_params: extraParamsInput // Include extra params here
-            }]
-        };
-
-        try {
-            const res = await addOrder(orderData);
-
-            if (res && res.id) { // Assuming a successful response includes an 'id' or similar identifier
-                toast.success("Order created successfully!");
-                setIsConfirmDialogOpen(false);
-                navigate("/checkout"); // Redirect to checkout or a success page
-            } else if (res && res.error) {
-                toast.error(`Failed to create order: ${res.error}`);
-            } else {
-                toast.error("Failed to create order. Please try again.");
-            }
-        } catch (err) {
-            const errorMessage = err.response?.data?.message || err.message || "Failed to create order due to network or server error.";
-            console.error("Purchase failed", err);
-            toast.error(errorMessage);
-        } finally {
-            setIsProcessingPurchase(false);
-        }
     };
 
     const handleQuantityChange = (value) => {
         const newQty = parseInt(value);
-        if (service.is_zddk_product && service.product_type === 'amount' && parsedZddkQtyValues) {
-            const min = parseInt(parsedZddkQtyValues.min || 1);
-            const max = parseInt(parsedZddkQtyValues.max || Infinity);
-            if (!isNaN(newQty)) {
-                setQuantity(Math.max(min, Math.min(newQty, max)));
-            } else if (value === '') {
-                setQuantity(''); // Allow empty for typing
-            }
-        } else if (service.is_zddk_product && service.product_type === 'specificPackage' && Array.isArray(parsedZddkQtyValues)) {
-             // For specificPackage, quantity must be one of the predefined values
-            if (parsedZddkQtyValues.includes(newQty)) {
-                setQuantity(newQty);
-            } else if (value === '') { // Allow empty during selection
-                setQuantity('');
-            } else if (parsedZddkQtyValues.length > 0) {
-                 // If an invalid value is entered, revert to first valid option
-                setQuantity(parseInt(parsedZddkQtyValues[0]));
-            }
-        }
-        else if (!isNaN(newQty) && newQty > 0) {
+        if (!isNaN(newQty) && newQty > 0) {
             setQuantity(newQty);
-        } else if (value === '') {
-            setQuantity(1); // Default to 1 if input is cleared for non-ZDDK or unhandled types
         }
     };
 
-    const minQuantity = service?.is_zddk_product && service.product_type === 'amount' && typeof parsedZddkQtyValues === 'object' && parsedZddkQtyValues.min
-        ? parseInt(parsedZddkQtyValues.min) : 1;
-    const maxQuantity = service?.is_zddk_product && service.product_type === 'amount' && typeof parsedZddkQtyValues === 'object' && parsedZddkQtyValues.max
-        ? parseInt(parsedZddkQtyValues.max) : undefined;
+    const totalPrice = service ? (quantity * parseFloat(service.price)).toFixed(2) : "0.00";
 
+const handleBuy = async () => {
+    if (!service) return;
+
+    // Validate required fields
+    for (const field of service.user_fields || []) {
+        if (
+            field.required &&
+            (!extraParamsInput[field.field_name] || extraParamsInput[field.field_name].trim() === "")
+        ) {
+            toast.error(`Please fill ${field.field_label}`);
+            return;
+        }
+    }
+
+    setIsProcessing(true);
+
+    // 🚀 التحويل الصحيح للشكل المطلوب في Laravel
+    const userFieldsArray = Object.entries(extraParamsInput).map(([key, value]) => ({
+        field_name: key,
+        value: value
+    }));
+
+    const payload = {
+        product_id: service.id,
+        count: quantity,
+        user_fields: userFieldsArray
+    };
+
+    try {
+        const res = await addOrder(payload);
+        if (res && res.order) {
+            toast.success("Order created successfully!");
+            setIsDialogOpen(false);
+            navigate("/checkout");
+        } else {
+            toast.error("Failed to create order");
+        }
+    } catch (err) {
+       toast.error(`${err.response.data.message}`);
+    
+    } finally {
+        setIsProcessing(false);
+    }
+};
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-background">
-                <Header />
-                <main className="container mx-auto px-4 pt-24 pb-12">
-                    <div className="flex justify-center items-center min-h-[50vh]">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                    </div>
-                </main>
+            <div className="min-h-screen flex justify-center items-center">
+                <Loader2 className="animate-spin h-10 w-10 text-primary" />
             </div>
         );
     }
 
     if (!service) {
         return (
-            <div className="min-h-screen bg-background">
-                <Header />
-                <main className="container mx-auto px-4 pt-24 pb-12">
-                    <div className="text-center py-12">
-                        <h1 className="text-2xl font-bold mb-4">Service Not Found</h1>
-                        <p className="text-muted-foreground mb-6">The service you're looking for doesn't exist or has been removed.</p>
-                        <Button asChild>
-                            <Link to="/services">
-                                <ArrowLeft className="mr-2 h-4 w-4" />
-                                Back to Services
-                            </Link>
-                        </Button>
-                    </div>
-                </main>
+            <div className="text-center mt-20">
+                <p>Service not found.</p>
+                <Button asChild>
+                    <Link to="/services"><ArrowLeft className="mr-2 h-4 w-4" />Back</Link>
+                </Button>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-background">
-            <Header />
-            <main className="container mx-auto px-4 pt-24 pb-12">
-                <div className="mb-6">
-                    <Button variant="ghost" size="sm" asChild>
-                        <Link to="/services">
-                            <ArrowLeft className="h-4 w-4 mr-2" />
-                            Back to Services
-                        </Link>
+           <MainLayout>
+            <main className="container pt-24 pb-12">
+                <div className="mb-4">
+                    <Button variant="ghost" asChild>
+                        <Link to="/services"><ArrowLeft className="h-4 w-4 mr-2" />Back</Link>
                     </Button>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2">
-                        <div className="bg-card rounded-lg shadow-sm p-6">
-                            <div className="flex flex-wrap items-center justify-between mb-4">
-                                <div className="relative aspect-video w-full mb-3 bg-gray-100 rounded-md overflow-hidden">
-                                    <img
-                                        src={`${service.image_path}`}
-                                        alt={service.title}
-                                        className="object-cover w-full h-full"
-                                    />
-                                </div>
-                                <h1 className="text-2xl md:text-3xl font-bold">{service.title}</h1>
-                                {service.category?.name && (
-                                    <Badge variant="outline" className="mr-2">{service.category.name}</Badge>
-                                )}
-                            </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="md:col-span-2 space-y-4">
+                        <img 
+                        src={service.image} 
+                        alt={service.name_en} 
+                        className="rounded-lg w-100 h-100" />
+                        <h1 className="text-3xl font-bold">{service.name_en}</h1>
+                        <h1 className="text-3xl font-bold">${service.price}</h1>
 
-                            <p className="text-muted-foreground mb-6">{service.description}</p>
-
-                            <div className="flex flex-wrap gap-4 mb-8">
-                                <div className="flex items-center text-sm text-muted-foreground">
-                                    <Tag className="h-4 w-4 mr-1" />
-                                    ${service.price} {/* Base price display */}
-                                </div>
-                            </div>
-
-                            <div className="space-y-4">
-                                <h3 className="text-lg font-medium">Features & Benefits</h3>
-                                {service.features && service.features.length > 0 ? (
-                                    <ul className="list-disc list-inside space-y-1">
-                                        {service.features.map((feature, index) => (
-                                            <li key={index} className="flex items-center text-muted-foreground">
-                                                <Check className="h-4 w-4 mr-2 text-green-500" /> {feature}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                ) : (
-                                    <p className="text-muted-foreground">No features available</p>
-                                )}
-                            </div>
-                        </div>
+                        {service.category?.name_ar && (
+                            <Badge>{service.category.name_ar}</Badge>
+                        )}
+                       
                     </div>
 
-                    <div className="lg:col-span-1">
-                        <div className="bg-card rounded-lg shadow-sm p-6 sticky top-24">
-                            <h2 className="text-xl font-bold mb-2">Purchase Options</h2>
-                            <p className="text-sm text-muted-foreground mb-4">Select your preferred options below</p>
-
-                            <div className="space-y-4 mb-6">
-                                <div className="flex justify-between">
-                                    <span className="font-medium">Base Price:</span>
-                                    <span className="font-bold">${service.price}</span>
-                                </div>
-
-                                <div>
-                                    <Label htmlFor="quantity">Quantity</Label>
-                                    {service.is_zddk_product && service.product_type === 'specificPackage' && Array.isArray(parsedZddkQtyValues) && parsedZddkQtyValues.length > 0 ? (
-                                        <Select onValueChange={handleQuantityChange} value={String(quantity)}>
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select quantity" />
-                                            </SelectTrigger>
-                                            <SelectContent className='bg-blue-200'>
-                                                {parsedZddkQtyValues.map((value, index) => (
-                                                    <SelectItem key={index} value={String(value)}>
-                                                        {value}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    ) : (
-                                        <div className="flex items-center">
-                                            <Button type="button" size="icon" variant="outline" className="h-9 w-9 rounded-r-none" onClick={() => handleQuantityChange(quantity - 1)} disabled={quantity <= minQuantity}>
-                                                <Minus className="h-4 w-4" />
-                                            </Button>
-                                            <Input
-                                                id="quantity"
-                                                type="number"
-                                                min={minQuantity}
-                                                max={maxQuantity}
-                                                value={quantity === '' ? '' : quantity} // Ensure empty string works for input
-                                                onChange={(e) => handleQuantityChange(e.target.value)}
-                                                className="h-9 rounded-none border-x-0 w-16 px-0 text-center"
-                                            />
-                                            <Button type="button" size="icon" variant="outline" className="h-9 w-9 rounded-l-none" onClick={() => handleQuantityChange(quantity + 1)} disabled={maxQuantity !== undefined && quantity >= maxQuantity}>
-                                                <Plus className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Dynamic Extra Parameters for ZDDK Products */}
-                                {service.is_zddk_product && parsedZddkRequiredParams.length > 0 && (
-                                    <div className="space-y-3 pt-2">
-                                        <h4 className="font-semibold text-sm">Required Information:</h4>
-                                        {parsedZddkRequiredParams.map((paramName) => (
-                                            <div className="flex flex-col space-y-1" key={paramName}>
-                                                <Label htmlFor={paramName}>{paramName}</Label>
-                                                <Input
-                                                    id={paramName}
-                                                    type="text"
-                                                    value={extraParamsInput[paramName] || ''}
-                                                    onChange={(e) => handleExtraParamChange(paramName, e.target.value)}
-                                                    placeholder={`Enter ${paramName}`}
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="border-t pt-4 mb-6">
-                                <div className="flex justify-between mb-2">
-                                    <span className="font-medium">Total Price:</span>
-                                    <span className="text-xl font-bold">${totalPrice}</span>
-                                </div>
-                                <Button className="w-full" size="lg" onClick={() => setIsConfirmDialogOpen(true)}>
-                                    <CreditCard className="mr-2 h-5 w-5" />
-                                    Buy Now
+                    <div className="bg-card p-6 rounded-lg shadow-md sticky top-24">
+                        <h2 className="text-xl font-semibold mb-2">Buy This Service</h2>
+                        <div className="mb-4">
+                            <Label htmlFor="quantity">Quantity</Label>
+                            <div className="flex items-center mt-1">
+                                <Button size="icon" onClick={() => handleQuantityChange(quantity - 1)} disabled={quantity <= 1}>
+                                    <Minus className="h-4 w-4" />
                                 </Button>
-                                <p className="mt-4 text-sm text-muted-foreground text-center">
-                                    Your purchase is protected by our satisfaction guarantee.
-                                </p>
+                                <Input
+                                    id="quantity"
+                                    type="number"
+                                    value={quantity}
+                                    onChange={(e) => handleQuantityChange(e.target.value)}
+                                    className="w-20 text-center mx-2"
+                                />
+                                <Button size="icon" onClick={() => handleQuantityChange(quantity + 1)}>
+                                    <Plus className="h-4 w-4" />
+                                </Button>
                             </div>
+                        </div>
+
+                        {/* Dynamic User Fields */}
+                        {service.user_fields?.length > 0 && (
+                            <div className="space-y-3">
+                                <h4 className="font-semibold text-sm">Extra Info:</h4>
+                                {service.user_fields.map(field => (
+                                    <div key={field.id}>
+                                        <Label htmlFor={field.field_name}>{field.field_label}</Label>
+
+                                        {field.field_type === 4 && field.items_list ? (
+                                            <Select
+                                                onValueChange={(value) => handleFieldChange(field.field_name, value)}
+                                                value={extraParamsInput[field.field_name]}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder={`Select ${field.field_label}`} />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {field.items_list.split(",").map((item, idx) => (
+                                                        <SelectItem key={idx} value={item.trim()}>
+                                                            {item.trim()}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        ) : field.field_type === 3 ? (
+                                            <textarea
+                                                id={field.field_name}
+                                                value={extraParamsInput[field.field_name]}
+                                                onChange={(e) => handleFieldChange(field.field_name, e.target.value)}
+                                                className="border rounded px-3 py-2 w-full"
+                                            />
+                                        ) : (
+                                            <Input
+                                                id={field.field_name}
+                                                type={field.field_type === 2 ? "number" : field.field_type === 5 ? "email" : "text"}
+                                                value={extraParamsInput[field.field_name]}
+                                                onChange={(e) => handleFieldChange(field.field_name, e.target.value)}
+                                            />
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        <div className="border-t mt-4 pt-4">
+                            <p className="flex justify-between mb-2">
+                                <span>Total:</span>
+                                <span className="font-bold">${totalPrice}</span>
+                            </p>
+                            {
+                                user && (
+                                    
+                            <Button className="w-full" onClick={() => setIsDialogOpen(true)}>
+                                <CreditCard className="h-4 w-4 mr-2" />
+                                Buy Now
+                            </Button>
+                                    
+                                )
+                            }
                         </div>
                     </div>
                 </div>
             </main>
 
             {/* Confirmation Dialog */}
-            <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
-                <DialogContent className="bg-amber-100">
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogContent className='bg-black'>
                     <DialogHeader>
                         <DialogTitle>Confirm Purchase</DialogTitle>
-                        <DialogDescription>
-                            Are you sure you want to purchase <strong>{service.title}</strong>?
-                        </DialogDescription>
+                        <DialogDescription>Confirm buying {service.name_en} for ${totalPrice}</DialogDescription>
                     </DialogHeader>
 
-                    <div className="py-4 space-y-4">
-                        <div className="flex justify-between">
-                            <span className="font-medium">Base Price:</span>
-                            <span className="font-bold">${service.price}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="font-medium">Quantity:</span>
-                            <span>{quantity}</span>
-                        </div>
-                         {parsedZddkRequiredParams.length > 0 && (
-                            <div className="space-y-2">
-                                <h4 className="font-medium text-sm mt-2">Submitted Details:</h4>
-                                {parsedZddkRequiredParams.map(paramName => (
-                                    <div key={`confirm-${paramName}`} className="flex justify-between text-sm text-muted-foreground">
-                                        <span>{paramName}:</span>
-                                        <span className="font-semibold">{extraParamsInput[paramName] || 'N/A'}</span>
-                                    </div>
+                    <div className="py-4 space-y-3">
+                        <p><strong>Quantity:</strong> {quantity}</p>
+                        {service.user_fields?.length > 0 && (
+                            <>
+                                <h4 className="font-medium text-sm mt-2">Extra Details:</h4>
+                                {service.user_fields.map(field => (
+                                    <p key={field.id} className="text-sm">
+                                        <strong>{field.field_label}:</strong> {extraParamsInput[field.field_name] || "N/A"}
+                                    </p>
                                 ))}
-                            </div>
+                            </>
                         )}
-                        <div className="flex justify-between border-t pt-3">
-                            <span className="font-medium">Total Price:</span>
-                            <span className="font-bold">${totalPrice}</span>
-                        </div>
+                        <p className="border-t pt-2"><strong>Total:</strong> ${totalPrice}</p>
                     </div>
 
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsConfirmDialogOpen(false)} disabled={isProcessingPurchase}>
-                            Cancel
-                        </Button>
-                        <Button onClick={handleBuyNow} disabled={isProcessingPurchase || parseFloat(totalPrice) <= 0}>
-                            {isProcessingPurchase && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            {isProcessingPurchase ? "Processing..." : "Confirm Purchase"}
+                        <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                        <Button onClick={handleBuy} disabled={isProcessing}>
+                            {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {isProcessing ? "Processing..." : "Confirm"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </div>
+            </MainLayout>
+   
     );
 };
 

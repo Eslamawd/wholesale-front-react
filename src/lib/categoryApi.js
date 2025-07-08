@@ -3,11 +3,21 @@
 import api from "../api/axiosClient";
 
 
-export async function loadCategory() {
-  const response = await api().get("api/categories");
+export async function loadCategory(page) {
+  const response = await api().get(`api/categories?page=${page || 1}`);
   // نفترض أنّ الـ response.data هو مصفوفة الخدمات
   return response.data;
 }
+export const loadAllProductWithCat = async (id, productPage = 1, childrenPage = 1) => {
+  const res = await api().get(
+    `/api/categories/${id}?page=${productPage}&children_page=${childrenPage}`
+  );
+  return res.data;
+};
+
+
+
+
 
 export async function addCategory(serviceData) {
   // لا حاجة لتمرير الـ id، Laravel سيولّد id تلقائيًا (بما أننا استخدمنا auto-increment)

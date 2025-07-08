@@ -5,53 +5,26 @@ import { Button } from "../../ui/button";
 import { Input } from "../../ui/Input";
 import { Textarea } from "../../ui/textarea";
 import { Label } from "../../ui/Label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 import { Separator } from "../../ui/Separator";
 import { ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { updateService } from "../../../lib/serviceApi.js";
-import { loadCategory } from "../../../lib/categoryApi.js";
-
 export default function UpdateServiceForm({ service, onSuccess, onCancel }) {
   // هنا نهيئ الحالة بقيم 'product' عند فتح المكوّن
   const [formData, setFormData] = useState({
-    name: service?.title || "",
-    description: service?.description || "",
+    name: service?.name_ar || "",
     price: service?.price || 0,
     imageFile: null,
-    imageUrl: service?.image_path || "",
-    categoryId: service?.category_id || "",
+    imageUrl: service?.image || "",
+    categoryId: service?.category.name_ar || "",
 
   });
 
-  const [serviceCategories, setServiceCategories] = useState([]);
   const [activeTab, setActiveTab] = useState("basic");
   const [isLoading, setIsLoading] = useState(false);
   const DEFAULT_IMAGE = "/images/default-image.png";
 
-  // 1) جلب قائمة الفئات عند التحميل
-  useEffect(() => {
-    async function fetchCategories() {
-      try {
-        const res = await loadCategory()
-        if (res.categories){
-          setServiceCategories(res.categories)
-          toast.success('GeT Category')
-        }
-      } catch (err) {
-        console.error("Failed to fetch categories:", err);
-        toast.error("فشل في جلب الفئات");
-      }
-    }
-    fetchCategories();
-  }, []);
 
   // 2) تغييرات الحقول النصية والأرقام
   const handleInputChange = (e) => {
@@ -62,9 +35,7 @@ export default function UpdateServiceForm({ service, onSuccess, onCancel }) {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: parseFloat(value) || 0 }));
   };
-  const handleSelectChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
+
 
   // 3) رفع الصورة (لو رغب المستخدم في تغييرها)
   const handleImageUpload = (e) => {
@@ -96,10 +67,8 @@ const handleSubmit = async (e) => {
     setIsLoading(true);
     try {
         const payload = new FormData();
-        payload.append("title", formData.name);
-        payload.append("description", formData.description);
+        payload.append("name_ar", formData.name);
         payload.append("price", formData.price);
-        payload.append("category_id", formData.categoryId);
         payload.append("_method", "PATCH"); // Laravel expects this for updates
       if (formData.imageFile) {
             payload.append("image_path", formData.imageFile);
@@ -108,9 +77,9 @@ const handleSubmit = async (e) => {
 
         const res = await updateService(service.id, payload);
         
-         if (res.service.title && res.service.description && res.service.price && res.service.image_path) {
+         if (res.product.name_ar && res.product.price) {
               toast.success("Created service successfully!");
-              onSuccess && onSuccess(res.service);
+              onSuccess && onSuccess(res.product);
              } else {
              // Handle cases where res.service might not be present but no error was thrown
             toast.warning("Service updated, but response was unexpected.");
@@ -132,7 +101,7 @@ const handleSubmit = async (e) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 p-6 bg-black rounded-lg shadow">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-white rounded shadow-sm">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-black rounded shadow-sm">
         <TabsList className="grid grid-cols-2">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
           <TabsTrigger value="pricing">Pricing</TabsTrigger>
@@ -154,39 +123,10 @@ const handleSubmit = async (e) => {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="categoryId">Category</Label>
-              <Select
-                value={formData.categoryId}
-                onValueChange={(val) => handleSelectChange("categoryId", val)}
-              >
-                <SelectTrigger name="categoryId" id="categoryId">
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent className='bg-amber-200'>
-                  <SelectItem>Select a category</SelectItem>
-                  {serviceCategories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+           
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              placeholder="Service description"
-              rows={3}
-            />
-          </div>
-
+         
 
           <div className="space-y-2">
             <Label htmlFor="image">
