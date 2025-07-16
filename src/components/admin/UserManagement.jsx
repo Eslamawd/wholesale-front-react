@@ -120,6 +120,7 @@ const UserManagement = () => {
     const updatedUsers = users.map((u) => (u.id === userId ? updatedUser : u));
     setUsers(updatedUsers);
     setFilteredUsers(updatedUsers);
+    
 
     toast.success(`Role updated to ${newRole}`);
   } catch (error) {

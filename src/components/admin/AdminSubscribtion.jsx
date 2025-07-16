@@ -159,6 +159,7 @@ const AdminSubscriptions = () => {
       const updatstaut = response.subscription;
       const updatstauts = subscriptions.map((u) => (u.id === updatstaut.id ? updatstaut : u));
       setSubscriptions(updatstauts);
+    
   
       toast.success(`Role updated to ${newRole}`);
     } catch (error) {
