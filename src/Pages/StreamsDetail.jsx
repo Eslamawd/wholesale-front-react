@@ -71,7 +71,7 @@ const StreamsDetail = () => {
             }
             toast.success("Subscription successful!");
             setIsDialogOpen(false);
-            navigate("/profile"); // change if you have a subscriptions page
+            navigate("/my-subscriptions"); // change if you have a subscriptions page
         } catch (err) {
             toast.error(err?.response?.data?.message || "Failed to subscribe");
         } finally {

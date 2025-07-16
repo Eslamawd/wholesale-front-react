@@ -29,11 +29,11 @@ const MySubscriptions = () => {
         const data = res.data || [];
 
         setSubscriptions(data);
-        setCurrentPage(res.data.meta.current_page);
-        setLastPage(res.data.meta.last_page);
-        setTotal(res.data.meta.total);
+        setCurrentPage(res.data.current_page);
+        setLastPage(res.last_page);
+        setTotal(res.total);
       } catch (error) {
-        console.error("Failed to load subscriptions");
+        console.error("Failed to load subscriptions",error);
       } finally {
         setLoading(false);
       }
@@ -115,9 +115,9 @@ const MySubscriptions = () => {
                     </TableRow>
 
                     {/* Expanded Product Info */}
-                    {expandedId === sub.id && sub.product && (
+                    {expandedId === sub.id && sub.product && sub.accounts && (
                       <TableRow className="bg-muted">
-                        <TableCell colSpan={6}>
+                        <TableCell colSpan={2}>
                           <div className="flex items-start gap-4 p-4">
                             <img
                               src={sub.product.image}
@@ -133,6 +133,10 @@ const MySubscriptions = () => {
                             </div>
                           </div>
                         </TableCell>
+                         <TableCell>
+                              <h2>{sub.accounts.email} </h2> 
+                             <h2>{sub.accounts.password}  </h2> 
+                          </TableCell>
                       </TableRow>
                     )}
                   </React.Fragment>

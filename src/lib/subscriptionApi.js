@@ -25,4 +25,19 @@ export async function changeStatus(id, paylod) {
   return response.data;
 }
 
-
+export async function getAllSubCount() {
+    const response = await api().get("api/admin/subscribe/count")
+    if (response.status !== 200) {
+      throw new Error("Failed to fetch order count");
+    }
+    return response.data;
+  
+} 
+export async function getRevnueSub() {
+    const response = await api().get("api/admin/subscribe/revnue")
+    if (response.status !== 200) {
+      throw new Error("Failed to fetch order count");
+    }
+    return response.data;
+  
+} 

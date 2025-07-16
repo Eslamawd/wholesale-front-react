@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { motion } from "framer-motion";
 import {
   Table,
   TableHeader,
@@ -16,11 +17,13 @@ import {
     DialogFooter
 } from "../ui/Dialog";
 
+import { Card, CardHeader, CardTitle, CardContent } from "../ui/Card";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Button } from '../ui/button';
-import { Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Loader2, ChevronDown, ChevronUp, SubtitlesIcon, DollarSign } from 'lucide-react';
 import { Badge } from '../ui/badge';
-import { changeStatus, getsubscribeByAdmin } from '../../lib/subscriptionApi';
+import { changeStatus, getAllSubCount, getRevnueSub, getsubscribeByAdmin } from '../../lib/subscriptionApi';
 import { toast } from 'sonner';
 import { Label } from '../ui/Label';
 import { Separator } from '../ui/Separator';
@@ -35,6 +38,10 @@ const AdminSubscriptions = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
   const [total, setTotal] = useState(0);
+
+  const [totalSub, setTotalSub] = useState(0);
+  const [revenue, setRevenue] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   const navigate = useNavigate()
 
@@ -108,6 +115,43 @@ const AdminSubscriptions = () => {
     fetchSubscriptions();
   }, [currentPage]);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const [SubCount, revenueResponse] = await Promise.all([
+        
+          getAllSubCount(),
+          getRevnueSub(),
+        ]);
+  
+        if (SubCount && SubCount.count >= 0) {
+          setTotalSub(SubCount.count);
+        } else {
+          setTotalSub(0);
+          toast.error("No users found");
+        }
+  
+  
+        if (revenueResponse && revenueResponse.count >= 0) {
+          setRevenue(revenueResponse.count);
+        } else {
+          setRevenue(0);
+          toast.error("No revenue data found");
+        }
+  
+      } catch (error) {
+        console.error("Error fetching initial data:", error);
+        toast.error("Something went wrong while fetching dashboard data.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+  
+    fetchData();
+  }, []);
+  
+
   const toggleStatusRole = async (id, newRole) => {
     try {
       const response = await changeStatus(id, { status: newRole });
@@ -123,6 +167,8 @@ const AdminSubscriptions = () => {
     }
   };
 
+  const userPercentChange = totalSub > 0 ? `+${((totalSub / 100) * 5).toFixed(2)}%` : "0%";
+  const revenuePercentChange = revenue > 0 ? `+${((revenue / 100) * 5).toFixed(2)}%` : "0%";
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -133,9 +179,63 @@ const AdminSubscriptions = () => {
 
   return (
       <div className="space-y-6">
+
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Subscriptions Management</h2>
       </div>
+
+
+       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <SubtitlesIcon className="h-4 w-4 text-muted-foreground" />
+            Total Subscription
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="h-8 w-20 bg-muted animate-pulse rounded"></div>
+          ) : (
+            <motion.div 
+              className="text-2xl font-bold"
+              key={totalSub}
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.2 }}
+            >
+              {totalSub.toLocaleString()}
+            </motion.div>
+          )}
+          <p className="text-xs text-gray-500">{userPercentChange} from last month</p>
+        </CardContent>
+      </Card>
+    
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            Revenue
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="h-8 w-20 bg-muted animate-pulse rounded"></div>
+          ) : (
+            <motion.div 
+              className="text-2xl font-bold"
+              key={revenue}
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.2 }}
+            >
+              ${revenue.toLocaleString()}
+            </motion.div>
+          )}
+          <p className="text-xs text-gray-500">{revenuePercentChange} from last month</p>
+        </CardContent>
+      </Card>
+    </div>
         {subscriptions.length === 0 ? (
           <p>You have no subscriptions yet.</p>
         ) : (
