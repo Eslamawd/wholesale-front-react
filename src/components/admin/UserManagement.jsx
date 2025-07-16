@@ -8,6 +8,7 @@ import {
   TableHeader, 
   TableRow 
 } from "../ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Input } from "../ui/Input";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card";
@@ -47,7 +48,7 @@ import { depositBalance } from "../../lib/walletApi";
 
 
 const UserManagement = () => {
-   const [users, setUsers] = useState([]);
+ const [users, setUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredUsers, setFilteredUsers] = useState([]);
 
@@ -111,24 +112,22 @@ const UserManagement = () => {
   };
 
   // Toggle user active status
-  const toggleUserStatus = async (user) => {
-    try {
-      const role = {
-        role:  user.role === 'admin'  ?  user.role ='user' : user.role ='admin'
-      }
-      
-      const response = await changeRole(user.id, role)
-   
-      const updatedUser = response.user;
-      const updatedUsers = users.map((u) => (u.id === user.id ? updatedUser : u));
-      setUsers(updatedUsers);
-      setFilteredUsers(updatedUsers);
-      toast.success(`User ${user.email} status updated`);
-    } catch (error) {
-      console.error("Failed to toggle user status", error);
-      toast.error("Failed to toggle user status");
-    }
-  };
+  const toggleUserRole = async (userId, newRole) => {
+  try {
+    const response = await changeRole(userId, { role: newRole });
+
+    const updatedUser = response.user;
+    const updatedUsers = users.map((u) => (u.id === userId ? updatedUser : u));
+    setUsers(updatedUsers);
+    setFilteredUsers(updatedUsers);
+
+    toast.success(`Role updated to ${newRole}`);
+  } catch (error) {
+    console.error("Failed to update role", error);
+    toast.error("Failed to update role");
+  }
+};
+
 
   // Update balance
   const handleBalanceUpdate = async () => {
@@ -232,13 +231,18 @@ const UserManagement = () => {
                         <span className="font-medium">${user?.balance || 0.00}</span>
                       </TableCell>
                       <TableCell>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          user.role === 'admin' 
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-                            : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
-                        }`}>
-                          {user.role === 'admin' ? 'admin' : 'user'}
-                        </span>
+                       <span
+  className={`px-2 py-1 rounded-full text-xs font-medium ${
+    user.role === 'admin'
+      ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+      : user.role === 'seals'
+      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
+      : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+  }`}
+>
+  {user.role}
+</span>
+
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
@@ -259,14 +263,20 @@ const UserManagement = () => {
                             <Minus className="h-4 w-4 mr-1" />
                             Withdraw
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => toggleUserStatus(user)}
-                          >
-                            <Ban className="h-4 w-4 mr-1" />
-                            {user.role === 'admin' ? 'user' : 'admin'}
-                          </Button>
+                         <Select
+  defaultValue={user.role}
+  onValueChange={(val) => toggleUserRole(user.id, val)}
+>
+  <SelectTrigger className="w-[110px]">
+    <SelectValue />
+  </SelectTrigger>
+  <SelectContent className="bg-black text-white">
+    <SelectItem value="user">User</SelectItem>
+    <SelectItem value="seals">seller</SelectItem>
+    <SelectItem value="admin">Admin</SelectItem>
+  </SelectContent>
+</Select>
+
                           <Button
                             variant="destructive"
                             size="sm"

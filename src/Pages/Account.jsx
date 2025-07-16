@@ -18,14 +18,18 @@ import {
   Calendar,
   Clock,
   Key,
-  Copy
+  Copy,
+  Loader2
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { getBalanceUser } from "../lib/walletApi";
+import { loadPaymentByUser } from "../lib/paymentApi";
 
 function Account() {
     const { user, logout } = useAuth()
     const [ balance, setBalance ] = useState(0)
+    const [ payments, setPayments ] = useState([])
+    const [ isLoading, setIsLoading ] = useState(true)
     const navigate = useNavigate()
 
 
@@ -34,9 +38,14 @@ function Account() {
         const fetchBalance = async () => {
             try {
             const res = await getBalanceUser()
+            const payAll = await loadPaymentByUser()
             if (res.balance) {
                 setBalance(res.balance)
             }
+            if (payAll.payments.data) {
+                setPayments(payAll.payments.data)
+            }
+            setIsLoading(false);
              } catch (error) {
                   console.error('Error fetching user balance:', error);
                   toast.error('Failed to fetch balance');
@@ -75,23 +84,18 @@ function Account() {
                 <p className="text-muted-foreground">Manage your profile and preferences</p>
               </div>
             </div>
-            <Button asChild variant="outline">
-              <Link to="/dashboard">
-                <Package className="mr-2 h-4 w-4" />
-                Go to Full Dashboard
-              </Link>
-            </Button>
+           
           </div>
   
-          <Tabs defaultValue="profile" className="space-y-6">
-            <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full mb-6">
-              <TabsTrigger value="profile">Profile</TabsTrigger>
-              <TabsTrigger value="orders">Orders</TabsTrigger>
-              <TabsTrigger value="payments">Payments</TabsTrigger>
-              <TabsTrigger value="settings">Settings</TabsTrigger>
+          <Tabs defaultValue="profile" className="space-y-10 pb-9">
+            <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full mb-6 space-x-4 space-y-4">
+              <TabsTrigger value="profile" >Profile</TabsTrigger>
+              <TabsTrigger value="orders" >Orders</TabsTrigger>
+              <TabsTrigger value="payments" >Payments</TabsTrigger>
+              <TabsTrigger value="settings" >Settings</TabsTrigger>
             </TabsList>
   
-            <TabsContent value="profile" className="space-y-6">
+            <TabsContent value="profile" className="space-8 mt-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Personal Information</CardTitle>
@@ -125,17 +129,23 @@ function Account() {
             </TabsContent>
   
             <TabsContent value="orders" className="space-y-6">
-              <Card>
+              <Card className="space-y-4 mt-8 pt-10">
                 <CardHeader>
                   <CardTitle>Recent Orders</CardTitle>
                 </CardHeader>
                 <CardContent>
             
                   <div className="flex justify-center mt-6">
-                    <Button asChild>
+                    <Button >
                       <Link to="/checkout">
                         <History className="mr-2 h-4 w-4" />
                         View All Orders
+                      </Link>
+                    </Button>
+                    <Button >
+                      <Link to="/my-subscriptions">
+                        <History className="mr-2 h-4 w-4" />
+                        View All Subscriptions
                       </Link>
                     </Button>
                   </div>
@@ -146,59 +156,40 @@ function Account() {
             </TabsContent>
   
             <TabsContent value="payments" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Payment Methods</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between border rounded-lg p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-primary/10 p-2 rounded-md">
-                        <CreditCard className="h-6 w-6 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-medium">Visa ending in 4242</h3>
-                        <p className="text-sm text-muted-foreground">Expires 04/25</p>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="sm">Edit</Button>
-                  </div>
-                  
-                  <Button className="w-full">
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Add Payment Method
-                  </Button>
-                </CardContent>
-              </Card>
-              
+             
               <Card>
                 <CardHeader>
                   <CardTitle>Billing History</CardTitle>
                 </CardHeader>
                 <CardContent>
+                 
+                    {isLoading ? (
+                    <div className="flex justify-center items-center h-64">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <span className="ml-2 text-muted-foreground">Loading Pay...</span>
+                    </div>
+                ) : payments.length === 0 ? (
+                    <div className="text-center py-12">
+                        <h2 className="text-xl font-bold mb-4">No Payments Found</h2>
+                        <p className="text-muted-foreground">You have not made any payments yet.</p>
+                    </div>
+                ) : ( 
                   <div className="space-y-4">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-4">
+                    {payments.map((payment) => (
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-4" key={payment.id}>
                       <div>
-                        <h3 className="font-medium">Invoice #INV-001</h3>
-                        <p className="text-sm text-muted-foreground">May 15, 2023</p>
+                        <h3 className="font-medium">Invoice #{payment.id}</h3>
+                        <p className="text-sm text-muted-foreground">{payment.created_at}</p>
                       </div>
                       <div className="flex flex-col mt-3 sm:mt-0 sm:text-right">
-                        <span className="text-sm font-medium">$29.99</span>
+                        <span className="text-sm font-medium">${payment.balance}</span>
                         <Button size="sm" variant="ghost" className="mt-2">Download</Button>
                       </div>
                     </div>
-                    
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-4">
-                      <div>
-                        <h3 className="font-medium">Invoice #INV-002</h3>
-                        <p className="text-sm text-muted-foreground">April 15, 2023</p>
-                      </div>
-                      <div className="flex flex-col mt-3 sm:mt-0 sm:text-right">
-                        <span className="text-sm font-medium">$29.99</span>
-                        <Button size="sm" variant="ghost" className="mt-2">Download</Button>
-                      </div>
-                    </div>
-                  </div>
+                    ))}
+                </div>
+                )}
+                   
                 </CardContent>
               </Card>
             </TabsContent>

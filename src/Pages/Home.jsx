@@ -70,9 +70,9 @@ function Home() {
         const fetchData = async () => {
           
             try {
-                const [servicesData, categoriesRes] = await Promise.all([
+                const [servicesData, categoriesRes, ] = await Promise.all([
                     loadServices(),
-                    loadCategory()
+                    loadCategory(),
                 ]);
 
                 if (servicesData && Array.isArray(servicesData.products.data)) {
@@ -89,6 +89,8 @@ function Home() {
                     setCategories([]);
                     toast.warning("No categories found from the API.");
                 }
+
+            
             } catch (err) {
                 console.error("Error loading data:", err);
                 toast.error("Failed to load services.");
@@ -195,6 +197,9 @@ function Home() {
           </div>
         </section>
 
+
+
+
         {/* Categories Section */}
         <section className="py-16">
           <div className="container mx-auto px-4">
@@ -274,19 +279,25 @@ function Home() {
                       <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
                         {service.category.name_ar}
                       </span>
-                      {user ? ( <Button 
-                        size="sm" 
-                        onClick={()=> navigate(`/services/${service.id}`)}
-                      >
-                        <CreditCard className="h-4 w-4 mr-2" />
-                        Order Now
-                      </Button>) : ( <Button 
-                        size="sm" 
-                        onClick={()=> navigate(`/login`)}
-                      >
-                        <CreditCard className="h-4 w-4 mr-2" />
-                        Order Now
-                      </Button>)}
+                {user ? (
+  service.subscription ? (
+    <Button size="sm" onClick={() => navigate(`/streams/${service.id}`)}>
+      <Clock className="h-4 w-4 mr-2" />
+      Subscribe Now
+    </Button>
+  ) : (
+    <Button size="sm" onClick={() => navigate(`/services/${service.id}`)}>
+      <CreditCard className="h-4 w-4 mr-2" />
+      Order Now
+    </Button>
+  )
+) : (
+  <Button size="sm" onClick={() => navigate(`/login`)}>
+    <CreditCard className="h-4 w-4 mr-2" />
+    Order Now
+  </Button>
+)}
+
                      
                     </div>
                   </CardContent>
@@ -410,7 +421,7 @@ function Home() {
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-4 justify-end">
-                  { user & (
+                  { !user & (
 
                   <Link to="/register" className="w-full sm:w-auto">
                     <Button size="lg" variant="secondary" className="w-full sm:w-auto">

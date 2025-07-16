@@ -10,6 +10,7 @@ import { Copy, Check, AlertCircle, CreditCard, ExternalLink, Clock, User, LogIn 
 import MainLayout from "../components/MainLayout";
 import { toast } from "sonner";
 import { getBalanceUser } from "../lib/walletApi";
+import { addNewPay } from "../lib/paymentApi";
 
 
 
@@ -19,16 +20,10 @@ function Payment() {
   const [wishMoneyAccount] = useState('WISH-9988776655');
   const [copied, setCopied] = useState(false);
   const [amount, setAmount] = useState('');
-  const [notes, setNotes] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState('wish-money');
 
-  const bankAccount = {
-    name: 'Your Company Name',
-    number: '123456789',
-    routingNumber: '987654321',
-    swift: 'ABCDEFXX'
-  };
+
 
 
 
@@ -74,34 +69,30 @@ function Payment() {
     setAmount(e.target.value);
   };
 
-  const handleWishMoneySubmit = (e) => {
+  const handleWishMoneySubmit = async(e) => {
+    const formData = {
+      'balance': amount,
+    }
+
+    try {
+      
     e.preventDefault();
     setIsProcessing(true);
+    const res =  await addNewPay(formData)
+    if (res.payment) {
     // هنا يتم إرسال الطلب إلى الـ API
     setTimeout(() => {
-      alert("Wish Money payment submitted!");
+      toast(`Send New  ${res.payment.balance}`);
       setIsProcessing(false);
     }, 2000);
+  }
+      
+    } catch (error) {
+      console.log(error)
+    }
   };
 
-  const handleCreditCardSubmit = (e) => {
-    e.preventDefault();
-    setIsProcessing(true);
-    setTimeout(() => {
-      alert("Redirecting to bank payment...");
-      setIsProcessing(false);
-    }, 2000);
-  };
 
-  const handleBinancePaySubmit = (e) => {
-    e.preventDefault();
-    setIsProcessing(true);
-    setTimeout(() => {
-      alert("Redirecting to Binance Pay...");
-      setIsProcessing(false);
-    }, 2000);
-  };
- 
 
   return (
     <MainLayout>
@@ -134,16 +125,14 @@ function Payment() {
                   <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-2">
                     <TabsList className="grid grid-cols-3 mb-6">
                       <TabsTrigger value="wish-money">Wish Money</TabsTrigger>
-                      <TabsTrigger value="credit-card">Credit Card</TabsTrigger>
-                      <TabsTrigger value="binance">Binance Pay</TabsTrigger>
                     </TabsList>
                     
                     <TabsContent value="wish-money" className="space-y-4">
                       <div className="bg-primary/5 p-4 rounded-md mb-6">
                         <div className="flex justify-between items-center">
                           <div>
-                            <p className="font-medium">Wish Money Account Number:</p>
-                            <p className="text-xl font-bold">{wishMoneyAccount}</p>
+                            <p className="font-medium">Send Requist To add money</p>
+                        
                           </div>
                           <Button 
                             variant="outline" 
@@ -181,15 +170,6 @@ function Payment() {
                           />
                         </div>
                         
-                        <div className="space-y-2">
-                          <Label htmlFor="notes">Notes/Reference (Optional)</Label>
-                          <Input
-                            id="notes"
-                            placeholder="Any reference you included in your payment"
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                          />
-                        </div>
                         
                         <Button 
                           type="submit" 
@@ -201,72 +181,7 @@ function Payment() {
                       </form>
                     </TabsContent>
                     
-                    <TabsContent value="credit-card" className="space-y-4">
-                      <div className="bg-primary/5 p-4 rounded-md mb-6">
-                        <div className="mb-2">
-                          <p className="font-medium">Bank Account Details:</p>
-                          <p className="text-sm mt-2">Account Name: {bankAccount.name}</p>
-                          <p className="text-sm">Account Number: {bankAccount.number}</p>
-                          <p className="text-sm">Routing Number: {bankAccount.routingNumber}</p>
-                          <p className="text-sm">SWIFT: {bankAccount.swift}</p>
-                        </div>
-                      </div>
-                      
-                      <form onSubmit={handleCreditCardSubmit} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="cc-amount">Amount to Add</Label>
-                          <Input
-                            id="cc-amount"
-                            type="text"
-                            value={amount}
-                            onChange={handleAmountChange}
-                            placeholder="Enter amount"
-                            required
-                          />
-                        </div>
-                        
-                        <Button 
-                          type="submit" 
-                          className="w-full"
-                          disabled={isProcessing}
-                        >
-                          <CreditCard className="h-4 w-4 mr-2" />
-                          {isProcessing ? "Processing..." : "Proceed to Bank Payment"}
-                          <ExternalLink className="h-4 w-4 ml-2" />
-                        </Button>
-                      </form>
-                    </TabsContent>
-                    
-                    <TabsContent value="binance" className="space-y-4">
-                      <div className="bg-primary/5 p-4 rounded-md mb-6">
-                        <p className="text-sm">
-                          After clicking "Proceed with Binance Pay", you'll be redirected to complete the payment through Binance's secure payment gateway.
-                        </p>
-                      </div>
-                      
-                      <form onSubmit={handleBinancePaySubmit} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="bp-amount">Amount to Add</Label>
-                          <Input
-                            id="bp-amount"
-                            type="text"
-                            value={amount}
-                            onChange={handleAmountChange}
-                            placeholder="Enter amount"
-                            required
-                          />
-                        </div>
-                        
-                        <Button 
-                          type="submit" 
-                          className="w-full"
-                          disabled={isProcessing}
-                        >
-                          {isProcessing ? "Processing..." : "Proceed with Binance Pay"}
-                          <ExternalLink className="h-4 w-4 ml-2" />
-                        </Button>
-                      </form>
-                    </TabsContent>
+                  
                   </Tabs>
                 </CardContent>
               </Card>

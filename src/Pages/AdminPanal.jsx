@@ -9,7 +9,9 @@ import {
   Users, Package, ShoppingCart, TicketCheck, 
   BarChart3, Settings, AlertCircle, PlusCircle,
   Server, LogOut, CreditCard, LayoutDashboard,
-  DollarSign, AlertTriangle, MessageSquare, Mail
+  DollarSign, AlertTriangle, MessageSquare, Mail,
+  LucidePartyPopper,
+  StarsIcon
 } from "lucide-react";
 import AdminDashboard from "../components/admin/AdminDashboard";
 import { AdminOrders } from "../components/admin/AdminOrders";
@@ -18,6 +20,8 @@ import AdminServices from "../components/admin/AdminServices";
 import { useAuth } from "../context/AuthContext";
 import AdminCategory from "../components/admin/AdminCategory";
 import ProtectedRoute from "../components/ProtectedRoute";
+import AdminPayments from "../components/admin/AdminPayments";
+import AdminSubscriptions from "../components/admin/AdminSubscribtion";
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -117,6 +121,23 @@ const AdminPanel = () => {
                   <Button 
                     variant="ghost" 
                     className="w-full justify-start relative" 
+                    onClick={() => navigate("/admin/payments")}
+                  >
+                    <LucidePartyPopper className="mr-2 h-4 w-4" />
+                    Payments
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start relative" 
+                    onClick={() => navigate("/admin/subscriptions")}
+                  >
+                    <StarsIcon className="mr-2 h-4 w-4" />
+                    subscriptions
+                  </Button>
+                
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start relative" 
                     onClick={() => navigate("/admin/orders")}
                   >
                     <ShoppingCart className="mr-2 h-4 w-4" />
@@ -134,7 +155,9 @@ const AdminPanel = () => {
               <Route path="/customers" element={<AdminCustomersPage />} />
               <Route path="/categories" element={<AdminCategory />} />
               <Route path="/orders" element={<AdminOrders />} />
-                <Route path="/services" element={<AdminServices />} />
+              <Route path="/services" element={<AdminServices />} />
+              <Route path="/payments" element={<AdminPayments />} />
+              <Route path="/subscriptions" element={<AdminSubscriptions />} />
               <Route path="/reports" element={<div>Reports and Analytics</div>} />
               <Route path="/settings" element={<div>Admin Settings</div>} />
             </Routes>

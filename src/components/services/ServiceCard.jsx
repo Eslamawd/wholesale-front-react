@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../../components/ui/Card";
 import { Button } from "../../components/ui/button";
-import { ShoppingCart, Info, Check, Clock, Star, Gift, Zap, CreditCard, Badge } from 'lucide-react';
+import { ShoppingCart, Info, Check, Clock, Star, Gift, Zap, CreditCard, Badge, SubtitlesIcon } from 'lucide-react';
 
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -50,27 +50,24 @@ const ServiceCard = ({
                     <div className="flex justify-between items-baseline">
                         {/* Price display logic can go here if desired */}
                     </div>
-                    {
-                      user ? 
-                      <Button 
-                        className="w-full bg-black mt-3"
-                        size="sm"
-                        onClick={()=> navigate(`/services/${service.id}`)}
-                      
-                    >
-                        <ShoppingCart className="h-4 w-4 mr-1" />
-                        Buy Now
-                    </Button> :
-                    <Button 
-                        className="w-full bg-black mt-3"
-                        size="sm"
-                        onClick={()=> navigate(`/login`)}
-                    >
-                         <ShoppingCart className="h-4 w-4 mr-1" />
-                        Buy Now
-                    </Button>
-
-                    }
+                            {user ? (
+  service.subscription ? (
+    <Button size="sm" onClick={() => navigate(`/streams/${service.id}`)}>
+      <SubtitlesIcon className="h-4 w-4 mr-2" />
+      Subscribe Now
+    </Button>
+  ) : (
+    <Button size="sm" onClick={() => navigate(`/services/${service.id}`)}>
+      <CreditCard className="h-4 w-4 mr-2" />
+      Order Now
+    </Button>
+  )
+) : (
+  <Button size="sm" onClick={() => navigate(`/login`)}>
+    <CreditCard className="h-4 w-4 mr-2" />
+    Order Now
+  </Button>
+)}
                     
                     
                 </div>

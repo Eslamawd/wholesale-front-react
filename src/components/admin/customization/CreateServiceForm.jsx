@@ -1,42 +1,80 @@
-// src/components/admin/customization/CreateServiceForm.jsx
-
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "../../ui/button.jsx";
 import { Input } from "../../ui/Input.jsx";
 import { Textarea } from "../../ui/textarea.jsx";
 import { Label } from "../../ui/Label.jsx";
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs.jsx";
 import { Separator } from "../../ui/Separator.jsx";
-import { ImageIcon } from "lucide-react";
+import { CheckCheck, CheckCircle2, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
-import { addService } from "../../../lib/serviceApi.js";
+import { addProduct } from "../../../lib/serviceApi.js"; // تأكد من إنك عامل الملف ده
+import { getAllCat } from "../../../lib/categoryApi.js";
 
-export default function CreateServiceForm({ onSuccess, onCancel }) {
-  // فقط الحقول اللازمة لإنشاء خدمة جديدة
+export default function CreateProductForm({ onSuccess, onCancel }) {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     price: 0,
+    price_wholesale: 0,
+    quantity: 0,
+    subscription: false,
     imageFile: null,
-    imageUrl: "",    
-    categoryId: ""
+    imageUrl: "",
+    categoryId: "",
   });
+
+  const [categories, setCategories] = useState([]);
+  
+const [selectedParent, setSelectedParent] = useState(null);
+const [selectedCategoryId, setSelectedCategoryId] = useState("");
+
+useEffect(() => {
+  const loadCategories = async () => {
+    try {
+      const data = await getAllCat();
+      setCategories(data.categories || []);
+    } catch (err) {
+      console.error("Failed to load categories", err);
+      toast.error("Failed to load categories");
+    }
+  };
+  loadCategories();
+}, []);
+
+useEffect(() => {
+  setFormData((prev) => ({
+    ...prev,
+    categoryId: selectedCategoryId,
+  }));
+}, [selectedCategoryId]);
+
+
+const handleParentChange = (e) => {
+  const parentId = e.target.value;
+  setSelectedParent(parentId);
+  setSelectedCategoryId(""); // reset subcategory selection
+};
+
+const getChildrenOf = (parentId) => {
+  const parent = categories.find((cat) => cat.id == parentId);
+  return parent?.children || [];
+};
+
+
 
   const [activeTab, setActiveTab] = useState("basic");
   const [isLoading, setIsLoading] = useState(false);
 
-  // 2) تغيير قيم الحقول النصية والأرقام والقائمة
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
+
   const handleNumberChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: parseFloat(value) || 0 }));
   };
 
-  // 3) رفع الصورة: نخزن الملف والمعاينة فقط (بلا حفظ مسبق)
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -51,40 +89,42 @@ export default function CreateServiceForm({ onSuccess, onCancel }) {
     reader.readAsDataURL(file);
   };
 
-  // 4) عند الضغط على "Create Service"
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!formData.name.trim()) {
-      toast.error("please enter a service name");
+      toast.error("Please enter product name");
       return;
     }
     if (!formData.categoryId) {
-      toast.error("please select a category");
+      toast.error("Please select a category");
       return;
     }
 
     setIsLoading(true);
     try {
-      // نجمع بيانات multipart/form-data
       const payload = new FormData();
-      payload.append("title", formData.name);
+      payload.append("name_ar", formData.name);
       payload.append("description", formData.description);
       payload.append("price", formData.price.toString());
+      payload.append("price_wholesale", formData.price_wholesale.toString());
+      payload.append("subscription", formData.subscription? 'true': 'false');
+      payload.append("quantity", formData.quantity.toString());
       payload.append("category_id", formData.categoryId);
-      
+
       if (formData.imageFile) {
-        payload.append("image_path", formData.imageFile);
+        payload.append("image", formData.imageFile);
       }
-     const res = await addService(payload);
-   
-     if (res.service.name_ar && res.service.price && res.service.image) {
-      toast.success("Created service successfully!");
-      onSuccess && onSuccess(res.service);
-     }
-     
+
+      const res = await addProduct(payload);
+
+      if (res?.product?.id) {
+        toast.success("Product created successfully!");
+        onSuccess && onSuccess(res.product);
+      }
     } catch (err) {
-      console.error("Error creating service:", err);
-      toast.error("Failed to create service. Please try again.");
+      console.error("Error creating product:", err);
+      toast.error("Failed to create product. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -92,32 +132,94 @@ export default function CreateServiceForm({ onSuccess, onCancel }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 p-6 bg-black rounded-lg shadow">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-black rounded shadow-sm">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid grid-cols-2">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
           <TabsTrigger value="pricing">Pricing</TabsTrigger>
         </TabsList>
 
-        {/* تبويب Basic Info */}
         <TabsContent value="basic" className="pt-4 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Service Name</Label>
+              <Label htmlFor="name">Product Name</Label>
               <Input
                 id="name"
                 name="name"
                 type="text"
                 value={formData.name}
                 onChange={handleInputChange}
-                placeholder="Enter service name"
+                placeholder="Enter product name"
                 required
               />
-            </div>
-           
-          </div>
+               </div>
 
-         
-       
+                              {/* Parent Dropdown */}
+                    <div className="space-y-2">
+                      <Label>Parent Category</Label>
+                      <select
+                        name="parent"
+                        className="w-full border rounded p-2 bg-black"
+                        value={selectedParent || ""}
+                        onChange={handleParentChange}
+                      >
+                        <option value="">اختر تصنيف رئيسي</option>
+                        {categories.map((cat) => (
+                          <option key={cat.id} value={cat.id}>
+                            {cat.name_ar}
+                          </option>
+                        ))}
+                      </select>
+                      </div>
+
+                    {/* Children Dropdown */}
+                    {selectedParent && getChildrenOf(selectedParent).length > 0 && (
+                      <div className="space-y- 2">
+                        <Label>Subcategory</Label>
+                        <select
+                          name="category_id"
+                          className="w-full border rounded p-2 bg-black"
+                          value={selectedCategoryId}
+                          onChange={(e) => setSelectedCategoryId(e.target.value)}
+                        >
+                          <option value="">اختر تصنيف فرعي</option>
+                          {getChildrenOf(selectedParent).map((child) => (
+                            <option key={child.id} value={child.id}>
+                              {child.name_ar}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                  </div>
+
+                  <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              placeholder="Enter description"
+            />
+          </div>
+                <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="subescription"
+                name="subescription"
+                checked={formData.subscription}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    subscription: e.target.checked,
+                  }))
+                }
+              />
+              <Label htmlFor="subescription"> Can Add Subscription </Label>
+</div>
+
+
           <div className="space-y-2">
             <Label htmlFor="image">
               <ImageIcon className="inline-block mr-1 h-5 w-5" />
@@ -135,17 +237,15 @@ export default function CreateServiceForm({ onSuccess, onCancel }) {
                 src={formData.imageUrl}
                 alt="Preview"
                 className="mt-2 w-24 h-24 object-cover border rounded"
-                onError={() => setFormData((prev) => ({ ...prev, imageUrl: "" }))}
               />
             )}
           </div>
         </TabsContent>
 
-        {/* تبويب Pricing */}
         <TabsContent value="pricing" className="pt-4 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="price">Base Price ($)</Label>
+              <Label htmlFor="price">Price ($)</Label>
               <Input
                 id="price"
                 name="price"
@@ -155,7 +255,29 @@ export default function CreateServiceForm({ onSuccess, onCancel }) {
                 placeholder="0.00"
               />
             </div>
-            
+            <div className="space-y-2">
+              <Label htmlFor="price">Price Wholesale ($)</Label>
+              <Input
+                id="price_wholesale"
+                name="price_wholesale"
+                type="number"
+                value={formData.price_wholesale}
+                onChange={handleNumberChange}
+                placeholder="0.00"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="quantity">Quantity</Label>
+              <Input
+                id="quantity"
+                name="quantity"
+                type="number"
+                value={formData.quantity}
+                onChange={handleNumberChange}
+                placeholder="Enter quantity"
+              />
+            </div>
           </div>
         </TabsContent>
       </Tabs>
@@ -167,7 +289,7 @@ export default function CreateServiceForm({ onSuccess, onCancel }) {
           Cancel
         </Button>
         <Button type="submit" disabled={isLoading}>
-          {isLoading ? "Saving..." : "Create Service"}
+          {isLoading ? "Saving..." : "Create Product"}
         </Button>
       </div>
     </form>

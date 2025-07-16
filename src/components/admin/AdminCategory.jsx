@@ -35,7 +35,7 @@ import { toast } from "sonner";
 
 // استدعِ مكوّني الإنشاء والتحديث اللذين أنشأتهما
 import CreateCategoryForm from "./customization/CreateCategoryForm";
-import { deleteCategory, loadCategory } from "../../lib/categoryApi";
+import { deleteCategory, getAllCatAdmin } from "../../lib/categoryApi";
 import UpdateCategoryForm from "./customization/UpdateCategoryForm";
 
 // الدوال الجاهزة للتعامل مع Laravel API
@@ -64,7 +64,7 @@ const AdminCategory = () => {
             try {
                 const [ categoriesRes] = await Promise.all([
                   
-                    loadCategory(page)
+                    getAllCatAdmin(page)
                 ]);
 
                 if (categoriesRes && Array.isArray(categoriesRes.categories.data)) {
@@ -127,6 +127,7 @@ const AdminCategory = () => {
     try{
     const updatedCateg = categories.map((u) => (u.id === selectedCategory.id ? category : u));
     setCategories(updatedCateg)
+    setIsDialogOpen(false);
     }
     catch (error) {
       console.error("Error opening add dialog:", error);
@@ -232,7 +233,11 @@ const AdminCategory = () => {
 
           {isNew &&
             <CreateCategoryForm
-              onSuccess={handleAddNewCategory}
+            onSuccess={(newCategory) => {
+  setCategories([newCategory, ...categories]);
+  setIsDialogOpen(false);
+}}
+
               onCancel={() => {
                 setIsDialogOpen(false);
               }}
@@ -242,7 +247,9 @@ const AdminCategory = () => {
             {isUpdate &&
             <UpdateCategoryForm
             category={selectedCategory}  
-            onSuccess={handleUpdateCategory}
+            onSuccess={
+              handleUpdateCategory
+            }
             onCancel={() => {
                 setIsDialogOpen(false);
               }}
@@ -284,6 +291,14 @@ export default AdminCategory;
 
 
 const CategoryList = ({ categories, onEdit, onDelete }) => {
+  const [expandedIds, setExpandedIds] = useState([]);
+
+  const toggleExpand = (id) => {
+    setExpandedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
   if (categories.length === 0) {
     return (
       <Card>
@@ -295,47 +310,93 @@ const CategoryList = ({ categories, onEdit, onDelete }) => {
   }
 
   return (
-         <Table className="w-full"> 
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>id</TableHead>
-                    <TableHead>name</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {categories.map((category) => (
-                    <TableRow key={category.id} className="" >
-                      <TableCell className="">
-                        {category.id}
-                      </TableCell>
-                      <TableCell className="">
-                        {category.name_ar}
-                      </TableCell>
-                     
-           
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => onEdit(category)}
-                          >
-                            <ContainerIcon className="h-4 w-4 mr-1" />
-                            Edit Catgory
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => onDelete(category)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-                );
+    <Table className="w-full">
+      <TableHeader>
+        <TableRow>
+          <TableHead>ID</TableHead>
+          <TableHead>Name</TableHead>
+          <TableHead>Image</TableHead>
+          <TableHead className="text-right">Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {categories.map((category) => (
+          <React.Fragment key={category.id}>
+            <TableRow>
+              <TableCell>{category.id}</TableCell>
+              <TableCell>
+                <button
+                  className="font-semibold text-left hover:underline"
+                  onClick={() => toggleExpand(category.id)}
+                >
+                  {category.name_ar}
+                </button>
+              </TableCell>
+              <TableCell>
+                <img
+                  src={category.image || "/placeholder.png"}
+                  alt={category.name_en}
+                  className="h-10 w-10 object-cover rounded"
+                />
+              </TableCell>
+              <TableCell className="text-right">
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onEdit(category)}
+                  >
+                    <Pencil className="h-4 w-4 mr-1" />
+                    Edit
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => onDelete(category)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+
+            {/* الشلدرين */}
+            {expandedIds.includes(category.id) &&
+              category.children?.map((child) => (
+                <TableRow key={child.id} className="bg-black">
+                  <TableCell className="pl-8">{child.id}</TableCell>
+                  <TableCell className="pl-8">↳ {child.name_ar}</TableCell>
+                  <TableCell>
+                    <img
+                      src={child.image || "/placeholder.png"}
+                      alt={child.name_en}
+                      className="h-10 w-10 object-cover rounded"
+                    />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onEdit(child)}
+                      >
+                        <Pencil className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => onDelete(child)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+          </React.Fragment>
+        ))}
+      </TableBody>
+    </Table>
+  );
 };

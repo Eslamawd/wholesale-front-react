@@ -49,7 +49,16 @@ function NavigationLinks() {
             <span>Admin</span>
           </Button>
         </Link>
-      ) : null}
+      ) : user?.role === 'seals' ? (
+          <Link to="/seals">
+          <Button variant="outline" size="sm" className="flex gap-2 items-center">
+            <Settings className="h-4 w-4" />
+            <span>Seller</span>
+          </Button>
+        </Link>
+      ) : null
+
+    }
       
       {user ? (
         <>

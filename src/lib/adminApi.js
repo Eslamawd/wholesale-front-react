@@ -30,8 +30,8 @@ export async function getAllOrdersCount() {
   return response.data;
 }
 
-export async function getAllOrders() {
-  const response = await api().get("api/admin/all-order")
+export async function getAllOrders(page) {
+  const response = await api().get(`api/admin/all-order?page=${page}`);
    if (response.status !== 200) {
     throw new Error("Failed to delete user");
   }

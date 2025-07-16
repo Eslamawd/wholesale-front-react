@@ -22,7 +22,7 @@ export async function getServie(id) {
  * POST /api/services
  * @param serviceData: جسم الطلب بصيغة Service (object)
  */
-export async function addService(serviceData) {
+export async function addProduct(serviceData) {
   // لا حاجة لتمرير الـ id، Laravel سيولّد id تلقائيًا (بما أننا استخدمنا auto-increment)
 
 

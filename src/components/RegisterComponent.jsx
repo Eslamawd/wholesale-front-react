@@ -78,9 +78,10 @@ const handleSubmit = async (e) => {
 
   try {
     const user = await register(formData); // ← ننتظر انتهاء التسجيل
-    login(user); // ← تخزين المستخدم
-    toast.success("Account created successfully!");
-    navigate("/"); // ← توجيه بعد النجاح
+    if (user) {
+      toast.success("Account created successfully!");
+      navigate("/login"); // ← توجيه بعد النجاح
+    }
   } catch (error) {
     const backendErrors = error.response?.data?.errors;
     if (backendErrors) {
