@@ -421,7 +421,7 @@ function Home() {
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-4 justify-end">
-                  { !user & (
+                  { user ? null : (
 
                   <Link to="/register" className="w-full sm:w-auto">
                     <Button size="lg" variant="secondary" className="w-full sm:w-auto">
