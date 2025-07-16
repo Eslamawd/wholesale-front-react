@@ -18,7 +18,7 @@ import api from "../api/axiosClient";
 
 const RegisterComponent= () => {
   const navigate = useNavigate();
-  const {  user, login } = useAuth();
+  const {  user } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -52,7 +52,7 @@ const register = async (formData) => {
   try{
     await api().get("/sanctum/csrf-cookie"); // مهم في تسجيل الحساب الجديد
     const response = await api().post("/register", formData);
-    return response.data.user; // نعيد المستخدم فقط
+    return response.data; // نعيد المستخدم فقط
   } catch (error) {
     return error; // نرمي الخطأ لنعالجه في handleSubmit
   }
@@ -77,11 +77,19 @@ const handleSubmit = async (e) => {
   setIsSubmitting(true);
 
   try {
-    const user = await register(formData); // ← ننتظر انتهاء التسجيل
-    if (user) {
-      toast.success("Account created successfully!");
-      navigate("/login"); // ← توجيه بعد النجاح
-    }
+  const  response  = await register(formData);
+
+const user = response?.user;
+const message = response?.data?.message;
+
+if (!user) {
+  throw new Error(message || "Registration failed");
+}
+
+toast.success(`Registration successful: : ${user.name} `);
+navigate('/login');
+
+
   } catch (error) {
     const backendErrors = error.response?.data?.errors;
     if (backendErrors) {

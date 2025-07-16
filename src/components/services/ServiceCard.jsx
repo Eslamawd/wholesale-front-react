@@ -1,15 +1,12 @@
 import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../../components/ui/Card";
 import { Button } from "../../components/ui/button";
-import { ShoppingCart, Info, Check, Clock, Star, Gift, Zap, CreditCard, Badge, SubtitlesIcon } from 'lucide-react';
+import {  Clock, CreditCard } from 'lucide-react';
 
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-const ServiceCard = ({ 
-    service, 
-   
-}) => {
+const ServiceCard = ({ service }) => {
     const navigate = useNavigate();
     const { user } = useAuth();
 
@@ -20,7 +17,6 @@ const ServiceCard = ({
     return (
         <Card 
             className="overflow-hidden transition-all duration-300 hover:shadow-md h-full flex flex-col"
-            onClick={()=> navigate(`/services/${service.id}`)}
             key={service.id}
         >
             <CardHeader className="p-4 pb-2">
@@ -50,24 +46,24 @@ const ServiceCard = ({
                     <div className="flex justify-between items-baseline">
                         {/* Price display logic can go here if desired */}
                     </div>
-                            {user ? (
-  service.subscription ? (
-    <Button size="sm" onClick={() => navigate(`/streams/${service.id}`)}>
-      <SubtitlesIcon className="h-4 w-4 mr-2" />
-      Subscribe Now
-    </Button>
-  ) : (
-    <Button size="sm" onClick={() => navigate(`/services/${service.id}`)}>
-      <CreditCard className="h-4 w-4 mr-2" />
-      Order Now
-    </Button>
-  )
-) : (
-  <Button size="sm" onClick={() => navigate(`/login`)}>
-    <CreditCard className="h-4 w-4 mr-2" />
-    Order Now
-  </Button>
-)}
+                      {user ? (
+                      service.subscription ? (
+                        <Button size="sm" onClick={() => navigate(`/streams/${service.id}`)}>
+                          <Clock className="h-4 w-4 mr-2" />
+                          Subscribe Now
+                        </Button>
+                      ) : (
+                        <Button size="sm" onClick={() => navigate(`/services/${service.id}`)}>
+                          <CreditCard className="h-4 w-4 mr-2" />
+                          Order Now
+                        </Button>
+                      )
+                                            ) : (
+                                              <Button size="sm" onClick={() => navigate(`/login`)}>
+                                                <CreditCard className="h-4 w-4 mr-2" />
+                                                Order Now
+                                              </Button>
+                                            )}
                     
                     
                 </div>

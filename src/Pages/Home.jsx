@@ -214,7 +214,7 @@ function Home() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {categories.map((category) => (
-                <Link to={`/services?category=${category.id}`} key={category.id}>
+                <Link to={`/categories/${category.id}`} key={category.id}>
                   <Card className="bg-card h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                     <CardContent className="p-6 flex flex-col h-full">
                       <div className="bg-primary/10 rounded-full  flex items-center justify-center ">
@@ -291,12 +291,12 @@ function Home() {
       Order Now
     </Button>
   )
-) : (
-  <Button size="sm" onClick={() => navigate(`/login`)}>
-    <CreditCard className="h-4 w-4 mr-2" />
-    Order Now
-  </Button>
-)}
+                        ) : (
+                          <Button size="sm" onClick={() => navigate(`/login`)}>
+                            <CreditCard className="h-4 w-4 mr-2" />
+                            Order Now
+                          </Button>
+                        )}
 
                      
                     </div>
